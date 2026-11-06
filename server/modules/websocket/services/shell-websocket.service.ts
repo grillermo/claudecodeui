@@ -5,10 +5,11 @@ import path from 'node:path';
 import pty, { type IPty } from 'node-pty';
 import { WebSocket, type RawData } from 'ws';
 
-import { withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
+import { withClaudeConfigDir, withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
 import { parseIncomingJsonObject, stripAnsiSequences } from '@/shared/utils.js';
 
 type ShellIncomingMessage = {
+  claudeAccount?: string;
   type?: string;
   data?: string;
   cols?: number;
@@ -122,6 +123,8 @@ type ShellWebSocketDependencies = {
   ) => string | null | undefined;
   /** Where the session's transcript lives, which says which account owns it. */
   resolveTranscriptPath?: (sessionId: string) => string | null | undefined;
+  /** Readies a Claude account for a new session; null is the default login. */
+  resolveClaudeAccountConfigDir?: (email: string) => Promise<string | null>;
   spawnPty?: typeof pty.spawn;
 };
 
@@ -649,6 +652,17 @@ export function handleShellConnection(
         const termCols = readNumber(data.cols, 80);
         const termRows = readNumber(data.rows, 24);
         const prioritizedPath = prioritizeUserNpmGlobalBin(process.env);
+        const claudeAccount = provider === 'claude' && !resumeSessionId ? readString(data.claudeAccount) : '';
+        let baseEnv = withClaudeConfigDirForTranscript(
+          process.env,
+          provider === 'claude' && resumeSessionId && sessionId
+            ? dependencies.resolveTranscriptPath?.(sessionId)
+            : null,
+        );
+        if (claudeAccount && dependencies.resolveClaudeAccountConfigDir) {
+          const accountConfigDir = await dependencies.resolveClaudeAccountConfigDir(claudeAccount);
+          baseEnv = withClaudeConfigDir(baseEnv, accountConfigDir ?? path.join(os.homedir(), '.claude'));
+        }
 
         shellProcess = (dependencies.spawnPty ?? pty.spawn)(shell, shellArgs, {
           name: 'xterm-256color',
@@ -656,12 +670,7 @@ export function handleShellConnection(
           rows: termRows,
           cwd: resolvedProjectPath,
           env: {
-            ...withClaudeConfigDirForTranscript(
-              process.env,
-              provider === 'claude' && resumeSessionId && sessionId
-                ? dependencies.resolveTranscriptPath?.(sessionId)
-                : null,
-            ),
+            ...baseEnv,
             [prioritizedPath.key]: prioritizedPath.value,
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',

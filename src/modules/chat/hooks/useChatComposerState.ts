@@ -699,6 +699,7 @@ export function useChatComposerState({
       toolsSettings,
       skipPermissions: toolsSettings?.skipPermissions || false,
       sessionSummary: getNotificationSessionSummary(selectedSession, currentInput),
+      ...(provider === 'claude' ? { claudeAccount: readUserPreference('claudeAccount', '') } : {}),
     };
   }, [
     currentProviderEffort,

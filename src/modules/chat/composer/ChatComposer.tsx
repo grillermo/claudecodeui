@@ -36,6 +36,7 @@ import QueuedMessageCard from '@/modules/chat/composer/QueuedMessageCard';
 import BackgroundSendDialog from '@/modules/chat/composer/BackgroundSendDialog';
 import { ScheduleMessagePopover } from '@/modules/chat/composer/ScheduleMessagePopover';
 import { ScheduledMessageList } from '@/modules/chat/composer/ScheduledMessageList';
+import ComposerAccountMenu from '@/modules/chat/composer/ComposerAccountMenu';
 import ComposerModelMenu from '@/modules/chat/composer/ComposerModelMenu';
 import ComposerPermissionMenu from '@/modules/chat/composer/ComposerPermissionMenu';
 
@@ -58,6 +59,8 @@ type ChatComposerProps = {
   availablePermissionModes: PermissionMode[];
   onSelectPermissionMode: (mode: PermissionMode) => void;
   providerLabel: string;
+  /** A new Claude chat can pick its account; a session keeps the one that owns it. */
+  showAccountMenu: boolean;
   effort: string;
   availableEffortOptions: NonNullable<ProviderModelOption['effort']>['values'];
   onSelectEffort: (effort: string) => void;
@@ -135,6 +138,7 @@ export default function ChatComposer({
   availablePermissionModes,
   onSelectPermissionMode,
   providerLabel,
+  showAccountMenu,
   effort,
   availableEffortOptions,
   onSelectEffort,
@@ -490,6 +494,8 @@ export default function ChatComposer({
               disabled={!input.trim()}
               onSchedule={onScheduleMessage}
             />
+
+            {showAccountMenu && <ComposerAccountMenu />}
 
             <ComposerModelMenu
               effort={effort}

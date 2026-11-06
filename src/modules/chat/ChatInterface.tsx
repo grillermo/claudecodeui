@@ -534,6 +534,7 @@ function ChatInterface({
           )}
 
           <ChatComposer
+          showAccountMenu={provider === 'claude' && !selectedSession}
           pendingPermissionRequests={pendingPermissionRequests}
           handlePermissionDecision={handlePermissionDecision}
           handleGrantToolPermission={handleGrantToolPermission}

@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from 'express';
 
+import { claudeAccountsService } from '@/modules/providers/list/claude/claude-accounts.js';
 import { providerAuthService } from '@/modules/providers/services/provider-auth.service.js';
 import { claudeSettingsPermissionsService } from '@/modules/providers/services/claude-settings-permissions.service.js';
 import { providerCapabilitiesService } from '@/modules/providers/services/provider-capabilities.service.js';
@@ -623,6 +624,14 @@ const parseCustomModelsOnlyPayload = (payload: unknown): boolean => {
 
   return enabled;
 };
+
+/** The accounts a new Claude chat can run as: cswap's list, as claude-menu offers it. */
+router.get(
+  '/claude/accounts',
+  asyncHandler(async (_req: Request, res: Response) => {
+    res.json(createApiSuccessResponse(await claudeAccountsService.listAccounts()));
+  }),
+);
 
 router.get(
   '/:provider/auth/status',

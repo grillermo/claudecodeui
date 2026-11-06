@@ -39,11 +39,30 @@ export function findClaudeConfigDirForTranscript(
 }
 
 /**
+ * Environment for a CLI that runs in `directory`.
+ *
+ * `~/.claude` is reached by leaving the variable unset, because the CLI files
+ * credentials differently once it is set.
+ */
+export function withClaudeConfigDir(
+  env: NodeJS.ProcessEnv,
+  directory: string,
+  homeDirectory: string = os.homedir(),
+): NodeJS.ProcessEnv {
+  const nextEnv = { ...env };
+  if (directory === path.resolve(homeDirectory, '.claude')) {
+    delete nextEnv.CLAUDE_CONFIG_DIR;
+  } else {
+    nextEnv.CLAUDE_CONFIG_DIR = directory;
+  }
+  return nextEnv;
+}
+
+/**
  * Environment for a CLI that resumes the session stored at `jsonlPath`.
  *
  * The CLI only finds a session, and its account's login, in the config
- * directory that owns it. `~/.claude` is reached by leaving the variable unset,
- * because the CLI files credentials differently once it is set.
+ * directory that owns it.
  */
 export function withClaudeConfigDirForTranscript(
   env: NodeJS.ProcessEnv,
@@ -52,15 +71,5 @@ export function withClaudeConfigDirForTranscript(
   homeDirectory: string = os.homedir(),
 ): NodeJS.ProcessEnv {
   const directory = jsonlPath ? findClaudeConfigDirForTranscript(jsonlPath, directories) : null;
-  if (!directory) {
-    return env;
-  }
-
-  const nextEnv = { ...env };
-  if (directory === path.resolve(homeDirectory, '.claude')) {
-    delete nextEnv.CLAUDE_CONFIG_DIR;
-  } else {
-    nextEnv.CLAUDE_CONFIG_DIR = directory;
-  }
-  return nextEnv;
+  return directory ? withClaudeConfigDir(env, directory, homeDirectory) : env;
 }

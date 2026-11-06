@@ -1,4 +1,5 @@
 import { sessionsDb } from '@/modules/database/index.js';
+import { claudeAccountsService } from '@/modules/providers/list/claude/claude-accounts.js';
 import { providerRegistry } from '@/modules/providers/provider.registry.js';
 import { providerModelsService } from '@/modules/providers/services/provider-models.service.js';
 import { sessionsService } from '@/modules/providers/services/sessions.service.js';
@@ -54,6 +55,7 @@ export function createProviderRuntimeService(
   ): ProviderRuntimeContext => ({
     resolveProviderSessionId: dependencies.resolveProviderSessionId,
     resolveTranscriptPath: dependencies.resolveTranscriptPath,
+    resolveClaudeAccountConfigDir: claudeAccountsService.resolveConfigDir,
     resolveResumeModel: (sessionId, requestedModel) =>
       dependencies.resolveResumeModel(provider.id, sessionId, requestedModel),
     getProviderModels: async () => dependencies.getProviderModels(provider.id),

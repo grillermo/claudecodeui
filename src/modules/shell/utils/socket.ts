@@ -3,6 +3,7 @@ import { getStoredAuthToken } from '@/shared/authToken';
 
 type ShellInitMessage = {
   type: 'init';
+  claudeAccount?: string;
   projectPath: string;
   sessionId: string | null;
   hasSession: boolean;

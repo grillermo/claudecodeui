@@ -28,6 +28,7 @@ export type UserPreferences = {
   codeEditorSettings: unknown;
   uiPreferences: unknown;
   selectedProvider: string;
+  claudeAccount: string;
 };
 
 export type UserPreferenceKey = keyof UserPreferences;
@@ -67,6 +68,8 @@ const LEGACY_STORAGE_KEYS: Record<UserPreferenceKey, string> = {
   codeEditorSettings: '',
   uiPreferences: 'uiPreferences',
   selectedProvider: 'selected-provider',
+  // Never lived in localStorage; the name just has no legacy value to find.
+  claudeAccount: 'claude-account',
 };
 
 const PREFERENCE_KEYS = Object.keys(LEGACY_STORAGE_KEYS) as UserPreferenceKey[];

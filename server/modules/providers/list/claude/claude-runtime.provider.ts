@@ -30,7 +30,7 @@ import {
   CLAUDE_ULTRACODE_EFFORT
 } from '@/modules/providers/list/claude/claude-models.provider.js';
 import { resolveClaudeCodeExecutablePath } from '@/shared/claude-cli-path.js';
-import { withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
+import { withClaudeConfigDir, withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
 import {
   createNotificationEvent,
   notifyBackgroundWorkCompleted,
@@ -344,7 +344,9 @@ function mapCliOptionsToSDK(options: AnyRecord = {}) {
   const sdkOptions: AnyRecord = {};
 
   // A session can only be resumed from the config directory that holds it.
-  sdkOptions.env = withClaudeConfigDirForTranscript(buildClaudeSdkEnv(), options.transcriptPath);
+  sdkOptions.env = options.accountConfigDir === undefined
+    ? withClaudeConfigDirForTranscript(buildClaudeSdkEnv(), options.transcriptPath)
+    : withClaudeConfigDir(buildClaudeSdkEnv(), options.accountConfigDir ?? path.join(os.homedir(), '.claude'));
 
   // Resolve the executable eagerly on Windows because the SDK uses raw child_process.spawn,
   // which does not reliably follow npm's shell wrappers like cross-spawn does.
@@ -1140,10 +1142,16 @@ async function queryClaudeSDK(
       console.warn('[Claude SDK] Unable to load provider models for effort validation:', error);
     }
 
+    const transcriptPath = context.resolveTranscriptPath?.(sessionId);
     const sdkOptions = mapCliOptionsToSDK({
       ...options,
       providerSessionId,
-      transcriptPath: context.resolveTranscriptPath?.(sessionId),
+      transcriptPath,
+      // Undefined means no account was chosen. A transcript settles the account
+      // for good, so the choice only counts until the first one is indexed.
+      accountConfigDir: !transcriptPath && typeof options.claudeAccount === 'string' && options.claudeAccount
+        ? await context.resolveClaudeAccountConfigDir?.(options.claudeAccount)
+        : undefined,
       model: resolvedModel || options.model,
       effortModels,
     });

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { claudeAccountsService } from '@/modules/providers/list/claude/claude-accounts.js';
 import { resolveClaudeCodeExecutablePath } from '@/shared/claude-cli-path.js';
 import type { IProviderAuth } from '@/shared/interfaces.js';
 import type { CliVersionProbe, ProviderAuthStatus, ProviderAuthSubscriptionOverride } from '@/shared/types.js';
@@ -61,7 +62,7 @@ export class ClaudeProviderAuth implements IProviderAuth {
       };
     }
 
-    const credentials = await this.checkCredentials();
+    const credentials = await this.withKeychainLogin(await this.checkCredentials());
 
     return {
       installed,
@@ -73,6 +74,22 @@ export class ClaudeProviderAuth implements IProviderAuth {
       error: credentials.authenticated ? undefined : credentials.error || 'Not authenticated',
       ...(credentials.subscriptionOverride ? { subscriptionOverride: credentials.subscriptionOverride } : {}),
     };
+  }
+
+  /**
+   * On macOS a `claude /login` lives in the Keychain, where only the CLI can
+   * read it, and `.credentials.json` may be absent or a blank stub. So a file
+   * that shows no login is not proof of none: the CLI has the last word.
+   */
+  private async withKeychainLogin(credentials: ClaudeCredentialsStatus): Promise<ClaudeCredentialsStatus> {
+    if (credentials.authenticated) {
+      return credentials;
+    }
+
+    const login = await claudeAccountsService.readDefaultLogin();
+    return login?.loggedIn
+      ? { authenticated: true, email: login.email, method: 'keychain' }
+      : credentials;
   }
 
   /**

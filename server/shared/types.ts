@@ -641,6 +641,8 @@ export type ProviderRuntimeContext = {
   resolveProviderSessionId(sessionId: string | null | undefined): string | null;
   /** Where the session's transcript lives, which says which account owns it. */
   resolveTranscriptPath?(sessionId: string | null | undefined): string | null;
+  /** Readies a Claude account; null is the default login. */
+  resolveClaudeAccountConfigDir?(email: string): Promise<string | null>;
   resolveResumeModel(
     sessionId: string | undefined,
     requestedModel?: string | null,
