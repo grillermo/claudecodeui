@@ -1,6 +1,7 @@
 import fsp from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
+
+import { getClaudeConfigDirs } from '@/shared/claude-config-dirs.js';
 
 /**
  * One Claude CLI process that is currently producing a response.
@@ -15,12 +16,12 @@ type LiveClaudeCliSession = {
 
 /**
  * Claude Code keeps one file per running session here, named `<pid>.json`.
- * The directory belongs to the CLI, not to CloudCLI: it is only ever read.
+ * The directories belong to the CLI, not to CloudCLI: they are only ever read.
  */
-const registryDirectory = () => path.join(os.homedir(), '.claude', 'sessions');
+const registryDirectories = () => getClaudeConfigDirs().map((configDir) => path.join(configDir, 'sessions'));
 
 /**
- * Upper bound on registry files inspected per poll.
+ * Upper bound on registry files inspected per poll, per directory.
  *
  * The running-sessions endpoint is polled continuously, so a directory left
  * full of stale files by repeated crashes must not turn every poll into
@@ -103,19 +104,19 @@ async function readLiveBusySession(filePath: string): Promise<LiveClaudeCliSessi
  * is recomputed on every read instead of being cached or persisted.
  */
 export async function listBusyClaudeCliSessions(): Promise<LiveClaudeCliSession[]> {
-  let entries: string[];
-  try {
-    entries = await fsp.readdir(registryDirectory());
-  } catch {
-    // No registry directory at all is the normal case for an install that has
-    // never run the CLI, and an unreadable one is not worth failing a poll for.
-    return [];
-  }
+  const perDirectory = await Promise.all(registryDirectories().map(async (directory) => {
+    let entries: string[];
+    try {
+      entries = await fsp.readdir(directory);
+    } catch {
+      // No registry directory at all is the normal case for an install that has
+      // never run the CLI, and an unreadable one is not worth failing a poll for.
+      return [];
+    }
 
-  const registryFiles = entries.filter((entry) => entry.endsWith('.json')).slice(0, MAX_REGISTRY_FILES);
-  const sessions = await Promise.all(
-    registryFiles.map((entry) => readLiveBusySession(path.join(registryDirectory(), entry))),
-  );
+    const registryFiles = entries.filter((entry) => entry.endsWith('.json')).slice(0, MAX_REGISTRY_FILES);
+    return Promise.all(registryFiles.map((entry) => readLiveBusySession(path.join(directory, entry))));
+  }));
 
-  return sessions.filter((session): session is LiveClaudeCliSession => session !== null);
+  return perDirectory.flat().filter((session): session is LiveClaudeCliSession => session !== null);
 }

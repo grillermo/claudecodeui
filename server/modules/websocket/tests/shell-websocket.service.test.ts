@@ -195,6 +195,44 @@ test('bypassPermissions carries through to resumed claude sessions', () => {
   }
 });
 
+test('a resumed claude session runs under the account that holds its transcript', () => {
+  const previous = process.env.CLAUDE_EXTRA_CONFIG_DIRS;
+  const accountDir = path.join(os.tmpdir(), 'claude-account-a');
+  process.env.CLAUDE_EXTRA_CONFIG_DIRS = accountDir;
+  try {
+    let spawnedConfigDir: string | undefined;
+    const dependencies = {
+      resolveProviderSessionId: () => 'resumed-session-id',
+      resolveTranscriptPath: () => path.join(accountDir, 'projects', '-x', 'resumed-session-id.jsonl'),
+      spawnPty: (_shell: string, _args: string | string[], options: { env?: NodeJS.ProcessEnv }) => {
+        spawnedConfigDir = options.env?.CLAUDE_CONFIG_DIR;
+        return createFakePty() as never;
+      },
+    };
+
+    const socket = createFakeSocket();
+    handleShellConnection(socket as never, dependencies as never);
+    socket.emit(
+      'message',
+      JSON.stringify({
+        type: 'init',
+        projectPath: process.cwd(),
+        sessionId: `account-resume-${Date.now()}`,
+        hasSession: true,
+        provider: 'claude',
+      })
+    );
+
+    assert.equal(spawnedConfigDir, path.resolve(accountDir));
+  } finally {
+    if (previous === undefined) {
+      delete process.env.CLAUDE_EXTRA_CONFIG_DIRS;
+    } else {
+      process.env.CLAUDE_EXTRA_CONFIG_DIRS = previous;
+    }
+  }
+});
+
 test('a missing project directory is reported as an error frame and starts no pty', () => {
   const socket = createFakeSocket();
   let spawnCount = 0;

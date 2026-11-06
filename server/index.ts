@@ -121,6 +121,7 @@ createWebSocketServer(server, {
 
             return null;
         },
+        resolveTranscriptPath: (sessionId) => sessionsDb.getSessionById(sessionId)?.jsonl_path,
     },
     getPluginPort,
 });

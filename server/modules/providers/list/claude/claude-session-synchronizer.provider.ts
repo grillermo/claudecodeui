@@ -1,8 +1,8 @@
-import os from 'node:os';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 
 import { sessionsDb } from '@/modules/database/index.js';
+import { findClaudeConfigDirForTranscript, getClaudeConfigDirs } from '@/shared/claude-config-dirs.js';
 import {
   buildLookupMap,
   extractFirstValidJsonlData,
@@ -23,7 +23,6 @@ type ParsedSession = {
  */
 export class ClaudeSessionSynchronizer implements IProviderSessionSynchronizer {
   private readonly provider = 'claude' as const;
-  private readonly claudeHome = path.join(os.homedir(), '.claude');
 
   /**
    * Returns true when a JSONL file is a subagent transcript or tool result
@@ -43,38 +42,41 @@ export class ClaudeSessionSynchronizer implements IProviderSessionSynchronizer {
   }
 
   /**
-   * Scans ~/.claude/projects and upserts discovered sessions into DB.
+   * Scans the projects folder of every Claude config directory and upserts
+   * discovered sessions into DB.
    */
   async synchronize(since?: Date): Promise<number> {
-    const nameMap = await buildLookupMap(path.join(this.claudeHome, 'history.jsonl'), 'sessionId', 'display');
-    const files = await findFilesRecursivelyCreatedAfter(
-      path.join(this.claudeHome, 'projects'),
-      '.jsonl',
-      since ?? null
-    );
-
     let processed = 0;
-    for (const filePath of files) {
-      if (this.isSubagentTranscript(filePath)) {
-        continue;
-      }
-
-      const parsed = await this.processSessionFile(filePath, nameMap);
-      if (!parsed) {
-        continue;
-      }
-
-      const timestamps = await readFileTimestamps(filePath);
-      sessionsDb.createSession(
-        parsed.sessionId,
-        this.provider,
-        parsed.projectPath,
-        parsed.sessionName,
-        timestamps.createdAt,
-        timestamps.updatedAt,
-        filePath
+    for (const claudeHome of getClaudeConfigDirs()) {
+      const nameMap = await buildLookupMap(path.join(claudeHome, 'history.jsonl'), 'sessionId', 'display');
+      const files = await findFilesRecursivelyCreatedAfter(
+        path.join(claudeHome, 'projects'),
+        '.jsonl',
+        since ?? null
       );
-      processed += 1;
+
+      for (const filePath of files) {
+        if (this.isSubagentTranscript(filePath)) {
+          continue;
+        }
+
+        const parsed = await this.processSessionFile(filePath, nameMap);
+        if (!parsed) {
+          continue;
+        }
+
+        const timestamps = await readFileTimestamps(filePath);
+        sessionsDb.createSession(
+          parsed.sessionId,
+          this.provider,
+          parsed.projectPath,
+          parsed.sessionName,
+          timestamps.createdAt,
+          timestamps.updatedAt,
+          filePath
+        );
+        processed += 1;
+      }
     }
 
     return processed;
@@ -91,7 +93,8 @@ export class ClaudeSessionSynchronizer implements IProviderSessionSynchronizer {
       return null;
     }
 
-    const nameMap = await buildLookupMap(path.join(this.claudeHome, 'history.jsonl'), 'sessionId', 'display');
+    const claudeHome = findClaudeConfigDirForTranscript(filePath) ?? getClaudeConfigDirs()[0];
+    const nameMap = await buildLookupMap(path.join(claudeHome, 'history.jsonl'), 'sessionId', 'display');
     const parsed = await this.processSessionFile(filePath, nameMap);
     if (!parsed) {
       return null;

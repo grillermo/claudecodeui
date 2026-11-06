@@ -30,6 +30,7 @@ import {
   CLAUDE_ULTRACODE_EFFORT
 } from '@/modules/providers/list/claude/claude-models.provider.js';
 import { resolveClaudeCodeExecutablePath } from '@/shared/claude-cli-path.js';
+import { withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
 import {
   createNotificationEvent,
   notifyBackgroundWorkCompleted,
@@ -342,7 +343,8 @@ function mapCliOptionsToSDK(options: AnyRecord = {}) {
 
   const sdkOptions: AnyRecord = {};
 
-  sdkOptions.env = buildClaudeSdkEnv();
+  // A session can only be resumed from the config directory that holds it.
+  sdkOptions.env = withClaudeConfigDirForTranscript(buildClaudeSdkEnv(), options.transcriptPath);
 
   // Resolve the executable eagerly on Windows because the SDK uses raw child_process.spawn,
   // which does not reliably follow npm's shell wrappers like cross-spawn does.
@@ -1141,6 +1143,7 @@ async function queryClaudeSDK(
     const sdkOptions = mapCliOptionsToSDK({
       ...options,
       providerSessionId,
+      transcriptPath: context.resolveTranscriptPath?.(sessionId),
       model: resolvedModel || options.model,
       effortModels,
     });

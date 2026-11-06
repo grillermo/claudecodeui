@@ -20,6 +20,7 @@ import spawn from 'cross-spawn';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
 import { parseFrontMatter } from '@/shared/frontmatter.js';
+import { getClaudeConfigDirs } from '@/shared/claude-config-dirs.js';
 import type {
   AnyRecord,
   ApiSuccessShape,
@@ -232,7 +233,7 @@ export const FORBIDDEN_WORKSPACE_PATHS = [
 const READ_ONLY_ROOTS = [...new Set([
   '/tmp',
   os.tmpdir(),
-  path.join(os.homedir(), '.claude', 'projects'),
+  ...getClaudeConfigDirs().map((configDir) => path.join(configDir, 'projects')),
 ])];
 
 /**

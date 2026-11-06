@@ -639,6 +639,8 @@ export type ProviderRuntimePermissionGateway = {
  */
 export type ProviderRuntimeContext = {
   resolveProviderSessionId(sessionId: string | null | undefined): string | null;
+  /** Where the session's transcript lives, which says which account owns it. */
+  resolveTranscriptPath?(sessionId: string | null | undefined): string | null;
   resolveResumeModel(
     sessionId: string | undefined,
     requestedModel?: string | null,

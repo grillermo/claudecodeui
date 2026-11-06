@@ -5,6 +5,7 @@ import path from 'node:path';
 import pty, { type IPty } from 'node-pty';
 import { WebSocket, type RawData } from 'ws';
 
+import { withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
 import { parseIncomingJsonObject, stripAnsiSequences } from '@/shared/utils.js';
 
 type ShellIncomingMessage = {
@@ -119,6 +120,8 @@ type ShellWebSocketDependencies = {
     sessionId: string,
     provider: string,
   ) => string | null | undefined;
+  /** Where the session's transcript lives, which says which account owns it. */
+  resolveTranscriptPath?: (sessionId: string) => string | null | undefined;
   spawnPty?: typeof pty.spawn;
 };
 
@@ -653,7 +656,12 @@ export function handleShellConnection(
           rows: termRows,
           cwd: resolvedProjectPath,
           env: {
-            ...process.env,
+            ...withClaudeConfigDirForTranscript(
+              process.env,
+              provider === 'claude' && resumeSessionId && sessionId
+                ? dependencies.resolveTranscriptPath?.(sessionId)
+                : null,
+            ),
             [prioritizedPath.key]: prioritizedPath.value,
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',
