@@ -2,7 +2,7 @@
 
 ## Goal
 
-Bring plannotator-style review into the claudecodeui conversation as native features (no plugin, no iframe, no plannotator process). Review is a conversation, not a two-step approve/deny gate: the user points at specific parts of Claude's output with the mouse or cursor, comments or asks about them, and each round of feedback yields a new version in the conversation that clearly shows what changed.
+Bring plannotator-style review into the claudecodeui conversation as native features. Review is a conversation, not a two-step approve/deny gate: the user points at specific parts of Claude's output with the mouse or cursor, comments or asks about them, and each round of feedback yields a new version in the conversation that clearly shows what changed.
 
 ## Context (verified 2026-11-07)
 
@@ -23,27 +23,25 @@ Bring plannotator-style review into the claudecodeui conversation as native feat
 
 ## Decisions
 
-1. **No approval gate.** "Break the idea of a two-step flow that requires an approval, and rather a conversation that flows about a review." The aim is to keep the conversation going, not to collect a yes/no.
-2. **Feedback produces a new version with visible changes.** "As I add comments or provide feedback, a new version with the corrections appears in the conversation, clearly showing what changed." So the version diff is a core feature even though "Plan diff" wasn't ticked in the feature review.
-3. **Feedback is anchored to selections.** "Provide feedback on specific things that I should select with my mouse or cursor," and "have conversations about specific parts of your work." So every comment, question and discussion is tied to a passage. The "comment threads" pick is met by passage badges and quoted messages in the main thread (decision 7), not a separate thread UI.
-4. **Native, not plannotator.** Earlier options (iframe, sidecar, plugin, porting plannotator's code) were rejected as too much rewrite or too little control.
-5. **Claude uses the UI elements by default.** "An important part of this project is that you default to using the UI elements instead of plain text, without me having to ask you." Without this, the user has to ask for a choice, a mockup or a versioned document every time; having to leave the conversation for another URL is one of the project's main drivers. In practice:
+1. **Feedback produces a new version with visible changes.** "As I add comments or provide feedback, a new version with the corrections appears in the conversation, clearly showing what changed." So the version diff is a core feature even though "Plan diff" wasn't ticked in the feature review.
+2. **Feedback is anchored to selections.** "Provide feedback on specific things that I should select with my mouse or cursor," and "have conversations about specific parts of your work." So every comment, question and discussion is tied to a passage. The "comment threads" pick is met by passage badges and quoted messages in the main thread (decision 5), not a separate thread UI.
+3. **Claude uses the UI elements by default.** "An important part of this project is that you default to using the UI elements instead of plain text, without me having to ask you." Without this, the user has to ask for a choice, a mockup or a versioned document every time; having to leave the conversation for another URL is one of the project's main drivers. In practice:
    - Choices are question blocks, never prose options.
    - Plans, specs and other documents are versioned, so revisions show what changed.
    - Visuals are embedded images, live HTML or diagrams in the message, not links to elsewhere.
    - This is delivered as instructions claudecodeui adds to every session through the Agent SDK's `systemPrompt.append` (confirmed in the SDK docs), listing each element's syntax and when to use it.
    - It is part of each piece's definition of done: a piece isn't done until Claude uses its element unprompted in a test conversation.
 
-6. **Each version is a new message with its changes marked** (suggestions.html option A, "version=A"). Every version is its own assistant message, with insertions and deletions marked inline and a toggle to hide them; earlier versions stay where they were. The conversation reads as a story, at the cost of repeating long documents.
-7. **Passage conversations live in the main thread** (option A, "threads=A"). A question or comment about a passage is an ordinary message that opens with a quote of it, and the passage gets a badge ("1 discussion") linking to those messages. No separate thread UI. Simplest, and Claude sees everything in order.
+4. **Each version is a new message with its changes marked** (suggestions.html option A, "version=A"). Every version is its own assistant message, with insertions and deletions marked inline and a toggle to hide them; earlier versions stay where they were. The conversation reads as a story, at the cost of repeating long documents.
+5. **Passage conversations live in the main thread** (option A, "threads=A"). A question or comment about a passage is an ordinary message that opens with a quote of it, and the passage gets a badge ("1 discussion") linking to those messages. No separate thread UI. Simplest, and Claude sees everything in order.
 
-8. **Claude marks versioned documents.** Comments, questions and redlines work on any assistant message. Versions apply only to content Claude wraps in a document block with an id (e.g. `:::doc id=upload-plan`). A later block with the same id in the same session is the next version, and the UI diffs it against the previous one. This is reliable, needs no guessing, and follows from decision 5.
+6. **Claude marks versioned documents.** Comments, questions and redlines work on any assistant message. Versions apply only to content Claude wraps in a document block with an id (e.g. `:::doc id=upload-plan`). A later block with the same id in the same session is the next version, and the UI diffs it against the previous one. This is reliable, needs no guessing, and follows from decision 3.
 
-9. **Marks gather and go together.** Comments, questions and redlines collect above the composer and are saved on the server as drafts. They go to Claude with the user's next message as one feedback round, which produces at most one new version. This matches the "server drafts" pick.
+7. **Marks gather and go together.** Comments, questions and redlines collect above the composer and are saved on the server as drafts. They go to Claude with the user's next message as one feedback round, which produces at most one new version. This matches the "server drafts" pick.
 
-10. **Feedback lives in the message text** (approach A). A feedback round is a normal user message containing a structured block, and the UI renders that same block. Claude's JSONL stays the only record of sent feedback. Unsent marks extend the existing `session-drafts` table, and version diffs are computed in the browser from `:::doc` blocks in the transcript. Rejected: marks in the database (a second store that drifts from the JSONL on fork, resume and edit) and hidden metadata (two representations that can disagree). Anchors point at quoted text plus surrounding context, not offsets.
+8. **Feedback lives in the message text** (approach A). A feedback round is a normal user message containing a structured block, and the UI renders that same block. Claude's JSONL stays the only record of sent feedback. Unsent marks extend the existing `session-drafts` table, and version diffs are computed in the browser from `:::doc` blocks in the transcript. Rejected: marks in the database (a second store that drifts from the JSONL on fork, resume and edit) and hidden metadata (two representations that can disagree). Anchors point at quoted text plus surrounding context, not offsets.
 
-11. **Plan mode joins the conversation.** The ExitPlanMode plan is a versioned document (`plan`), feedback sent while it waits becomes the deny message, and Build is the only explicit approval. The SDK requires a decision on ExitPlanMode, but this way only "go ahead" needs a button; everything else is conversation. Approved with section 3.
+9. **Plan mode joins the conversation.** The ExitPlanMode plan is a versioned document (`plan`), feedback sent while it waits becomes the deny message, and Build is the only explicit approval. The SDK requires a decision on ExitPlanMode, but this way only "go ahead" needs a button; everything else is conversation. Approved with section 3.
 
 ## Sub-projects
 
@@ -102,7 +100,7 @@ A new feature module, `src/modules/review/`, used by chat only through its `inde
   - `DocVersion` shows the version header (title · vN · K changes), change chips from `addresses=`, and the body with changes marked against the previous version, with a hide-changes toggle. v1 is a plain document card.
   - `FeedbackRound` shows the marks as quote cards, colour-coded by kind, each linking to its passage.
 - **Transcript index.** `useReviewIndex(messages)` derives each document's ordered versions, the next free mark id, and the passages with later discussions (badges). It recomputes when messages change and stores nothing.
-- **Selection.** `SelectionToolbar` appears on a text selection inside an assistant message, offering Comment / Ask / Redline. Comment and Ask open a popover; Redline adds the mark at once. All three gather in the tray (decision 9); Ask is not sent on its own. The target is the doc id and version for selections inside a `:::doc`, otherwise `msg:` from `transcriptAnchorId`.
+- **Selection.** `SelectionToolbar` appears on a text selection inside an assistant message, offering Comment / Ask / Redline. Comment and Ask open a popover; Redline adds the mark at once. All three gather in the tray (decision 7); Ask is not sent on its own. The target is the doc id and version for selections inside a `:::doc`, otherwise `msg:` from `transcriptAnchorId`.
 - **Highlights.** Draft marks and badged passages are painted with the CSS Custom Highlight API, never by mutating the rendered DOM. Without API support, marks work but aren't painted. Check browser support before implementation.
 - **Composer.** `MarksTray` above the input: chips can be edited or removed, and are persisted through the session-drafts API extended with a `marks` field. On send, marks are serialised into a `:::feedback` block ahead of the typed text and the tray clears. Sends during a running turn use the existing queued-message path.
 - **Diff.** `diff` (jsdiff): split markdown into blocks (paragraphs, list items, headings, code fences), match blocks, word-diff changed blocks, line-diff code fences.
@@ -135,7 +133,7 @@ A new feature module, `src/modules/review/`, used by chat only through its `inde
 - Diff: edited, added, deleted and moved list items; code fences.
 - Components: selection → tray → send yields the exact feedback block; the hide-changes toggle; plan-mode feedback becomes the deny message.
 - Server: the `marks` migration and drafts round-trip; `systemPrompt.append` present on interactive runs, absent on unattended ones.
-- Unprompted use (decision 5's definition of done): a scripted real session asks for a plan without naming any element and checks that Claude writes a `:::doc`; it then sends a feedback block and checks for v2 with `addresses=`. Run manually before release, not in CI, because it calls the real model.
+- Unprompted use (decision 3's definition of done): a scripted real session asks for a plan without naming any element and checks that Claude writes a `:::doc`; it then sends a feedback block and checks for v2 with `addresses=`. Run manually before release, not in CI, because it calls the real model.
 
 ## Out of scope for this piece
 
