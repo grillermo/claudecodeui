@@ -192,7 +192,7 @@ export const ToolRenderer: React.FC<ToolRendererProps> = memo(({
       onFileOpen
     }) || {};
 
-    const isStreaming = mode === 'input' && !toolResult;
+    const isStreaming = mode === 'input' && !toolResult && !contentProps.content;
 
     return (
       <PlanDisplay
@@ -204,6 +204,7 @@ export const ToolRenderer: React.FC<ToolRendererProps> = memo(({
         rawContent={rawToolInput}
         toolName={toolName}
         toolId={toolId}
+        toolResult={toolResult}
       />
     );
   }

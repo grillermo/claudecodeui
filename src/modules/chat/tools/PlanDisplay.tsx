@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { ChevronsUpDown, FileText } from 'lucide-react';
 
 import {
@@ -15,7 +14,8 @@ import {
   Shimmer,
 } from '@/shared/ui';
 import { usePermission } from '@/modules/chat/context/PermissionContext';
-import { MarkdownContent } from '@/modules/chat/tools/ContentRenderers/MarkdownContent';
+import { DocVersion, ReviewSegments, hashText, useReview } from '@/modules/review';
+import { renderReviewMarkdown } from '@/modules/chat/transcript/reviewMarkdown';
 
 type PlanDisplayProps = {
   title: string;
@@ -26,6 +26,8 @@ type PlanDisplayProps = {
   rawContent?: string;
   toolName: string;
   toolId?: string;
+  /** The tool's result; a denial's message is the user's feedback on this plan. */
+  toolResult?: { isError?: boolean; content?: unknown } | null;
 };
 
 /**
@@ -40,8 +42,9 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
   showRawParameters = false,
   rawContent,
   toolName: _toolName,
+  toolId,
+  toolResult,
 }) => {
-  const { t } = useTranslation();
   const permissionCtx = usePermission();
 
   const pendingRequest = permissionCtx?.pendingPermissionRequests.find(
@@ -54,14 +57,9 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
     }
   };
 
-  const handleRevise = () => {
-    if (pendingRequest && permissionCtx) {
-      permissionCtx.handlePermissionDecision(pendingRequest.requestId, {
-        allow: false,
-        message: t('chat:misc.userAskedRevise'),
-      });
-    }
-  };
+  const review = useReview();
+  const planVersion = review?.index.planAt(toolId) ?? null;
+  const denial = toolResult?.isError && typeof toolResult.content === 'string' ? toolResult.content : '';
 
   return (
     <Collapsible defaultOpen={defaultOpen}>
@@ -84,15 +82,31 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
         <CollapsibleContent>
           <CardContent className="px-4 pb-4 pt-3">
             {content ? (
-              <MarkdownContent
-                content={content}
-                className="prose prose-sm max-w-none dark:prose-invert"
+              <DocVersion
+                id="plan"
+                body={content}
+                version={isStreaming ? null : planVersion?.version ?? 1}
+                previousBody={planVersion?.previousBody ?? null}
+                open={isStreaming}
+                bare
+                renderMarkdown={renderReviewMarkdown}
               />
             ) : isStreaming ? (
               <div className="py-2">
                 <Shimmer>Generating plan...</Shimmer>
               </div>
             ) : null}
+
+            {denial && (
+              <div className="mt-3 border-t border-border/40 pt-3">
+                <ReviewSegments
+                  content={denial}
+                  messageHash={hashText(denial)}
+                  isStreaming={false}
+                  renderMarkdown={renderReviewMarkdown}
+                />
+              </div>
+            )}
 
             {showRawParameters && rawContent && (
               <Collapsible className="mt-3">
@@ -120,14 +134,6 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
         {/* Footer — always visible when permission is pending */}
         {pendingRequest && (
           <CardFooter className="justify-end gap-2 border-t border-border/40 px-4 pb-3 pt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRevise}
-              className="text-muted-foreground"
-            >
-              Revise
-            </Button>
             <Button size="sm" onClick={handleBuild}>
               Build{' '}
               <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 py-0.5 font-mono text-[10px]">

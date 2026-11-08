@@ -11,3 +11,5 @@ export { default as ReviewHighlights } from '@/modules/review/components/ReviewH
 export { default as MarksTray } from '@/modules/review/components/MarksTray';
 export { prepareSubmission } from '@/modules/review/state/prepareSubmission';
 export type { ReviewContextValue } from '@/modules/review/state/ReviewContext';
+export { findPlanRequestToDeny } from '@/modules/review/state/planDenial';
+export { buildReviewIndex } from '@/modules/review/state/buildReviewIndex';

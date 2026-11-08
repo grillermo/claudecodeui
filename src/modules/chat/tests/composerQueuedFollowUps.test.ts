@@ -169,6 +169,7 @@ const render = (initialProps: Partial<Props> = {}) => {
         if (message.type === 'error') errors.push(message);
       },
       setIsUserScrolledUp: () => undefined,
+      pendingPermissionRequests: [],
       setPendingPermissionRequests: () => undefined,
       review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }),

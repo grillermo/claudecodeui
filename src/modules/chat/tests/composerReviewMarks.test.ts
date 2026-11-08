@@ -58,6 +58,7 @@ const render = (isLoading: boolean, marks = [MARK]) => {
     scrollToBottom: () => undefined,
     addMessage: () => undefined,
     setIsUserScrolledUp: () => undefined,
+    pendingPermissionRequests: [],
     setPendingPermissionRequests: () => undefined,
     review: { marks, composeFeedback, clearMarks } as never,
   }));

@@ -64,6 +64,7 @@ const renderComposer = () => {
       scrollToBottom: () => undefined,
       addMessage: () => undefined,
       setIsUserScrolledUp: () => undefined,
+      pendingPermissionRequests: [],
       setPendingPermissionRequests: () => undefined,
       review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }));

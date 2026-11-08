@@ -31,7 +31,7 @@ import { describeBackgroundTask, ownBackgroundTasks } from '@/modules/chat/utils
 import { useFileMentions } from '@/modules/chat/hooks/useFileMentions';
 import { useInputHistory } from '@/modules/chat/hooks/useInputHistory';
 import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';
-import { prepareSubmission, type ReviewContextValue } from '@/modules/review';
+import { findPlanRequestToDeny, prepareSubmission, type ReviewContextValue } from '@/modules/review';
 
 type UseChatComposerStateArgs = {
   review: ReviewContextValue;
@@ -68,6 +68,7 @@ type UseChatComposerStateArgs = {
   scrollToBottom: () => void;
   addMessage: (msg: ChatMessage) => void;
   setIsUserScrolledUp: (isScrolledUp: boolean) => void;
+  pendingPermissionRequests: PendingPermissionRequest[];
   setPendingPermissionRequests: Dispatch<SetStateAction<PendingPermissionRequest[]>>;
 };
 
@@ -235,6 +236,7 @@ export function useChatComposerState({
   scrollToBottom,
   addMessage,
   setIsUserScrolledUp,
+  pendingPermissionRequests,
   setPendingPermissionRequests,
   review,
 }: UseChatComposerStateArgs) {
@@ -893,6 +895,43 @@ export function useChatComposerState({
         return;
       }
 
+      // A plan waiting for a decision holds the turn open, so this message must
+      // answer it rather than queue behind it. Only Build approves; anything
+      // said here is a request for another version. The dependency array cannot
+      // name handlePermissionDecision, which is declared later in this hook.
+      const planRequest = findPlanRequestToDeny({
+        requests: pendingPermissionRequests,
+        text: currentInput,
+        hasAttachments: currentAttachments.length > 0 || previouslyUploadedAttachments.length > 0,
+        isQueuedResend: Boolean(queuedSubmission),
+      });
+      if (planRequest) {
+        sendMessage({
+          type: 'chat.permission-response',
+          requestId: planRequest.requestId,
+          allow: false,
+          message: currentInput,
+        });
+        setPendingPermissionRequests((previous) =>
+          previous.filter((request) => request.requestId !== planRequest.requestId),
+        );
+        if (consumedMarks) {
+          reviewRef.current.clearMarks();
+        }
+        recordSentMessage(typedInput);
+        setInput('');
+        inputValueRef.current = '';
+        resetCommandMenuState();
+        setIsTextareaExpanded(false);
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+        if (draftScopeRef.current) {
+          writeDraftText(draftScopeRef.current, '');
+        }
+        return;
+      }
+
       // A turn is already in flight: stash this message instead of sending it.
       // Upload attached files now so the queued record contains durable image
       // descriptors that can be sent even if another session is open later.
@@ -1166,6 +1205,8 @@ export function useChatComposerState({
       addMessage,
       setIsUserScrolledUp,
       slashCommands,
+      pendingPermissionRequests,
+      setPendingPermissionRequests,
       t,
     ],
   );
