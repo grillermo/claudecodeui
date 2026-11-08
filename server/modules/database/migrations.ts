@@ -520,6 +520,9 @@ export const runMigrations = (db: Database) => {
     addProviderModelEffortColumns(db);
     db.exec(USER_PREFERENCES_TABLE_SCHEMA_SQL);
     db.exec(SESSION_DRAFTS_TABLE_SCHEMA_SQL);
+    const sessionDraftColumns = (db.prepare('PRAGMA table_info(session_drafts)').all() as { name: string }[])
+      .map((column) => column.name);
+    addColumnToTableIfNotExists(db, 'session_drafts', sessionDraftColumns, 'marks', 'TEXT');
     db.exec(SUPERSEDED_PROVIDER_SESSIONS_TABLE_SCHEMA_SQL);
     addSupersededTranscriptPathColumn(db);
 

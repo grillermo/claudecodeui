@@ -31,6 +31,7 @@ async function withUserServer(run: (baseUrl: string, calls: DraftCall[]) => Prom
       getDrafts: () => [],
       saveDraft: (...args) => { calls.push(['saveDraft', ...args]); },
       saveDraftText: (...args) => { calls.push(['saveDraftText', ...args]); },
+      saveDraftMarks: () => undefined,
       appendQueuedMessage: (...args) => {
         calls.push(['appendQueuedMessage', ...args]);
         // Stands in for a scope whose waiting message cannot take this one.

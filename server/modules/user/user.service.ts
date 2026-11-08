@@ -11,6 +11,7 @@ type DraftRecord = {
   scope: string;
   text: string;
   queuedMessage: unknown | null;
+  marks: unknown[];
   updatedAt: string;
 };
 
@@ -29,6 +30,7 @@ type UserDependencies = {
     getDrafts(userId: number): DraftRecord[];
     saveDraft(userId: number, scope: string, draft: { text: string; queuedMessage: unknown | null }): void;
     saveDraftText(userId: number, scope: string, text: string): void;
+    saveDraftMarks(userId: number, scope: string, marks: unknown[]): void;
     appendQueuedMessage(
       userId: number,
       scope: string,
@@ -195,7 +197,7 @@ export function createUserService(dependencies: UserDependencies) {
 
     saveDraft(userId: number, scopeInput: unknown, body: unknown) {
       const scope = readDraftScope(scopeInput);
-      const payload = (body ?? {}) as { text?: unknown; queuedMessage?: unknown };
+      const payload = (body ?? {}) as { text?: unknown; queuedMessage?: unknown; marks?: unknown };
       const text = typeof payload.text === 'string' ? payload.text : '';
 
       if (text.length > MAX_DRAFT_TEXT_LENGTH) {
@@ -203,6 +205,18 @@ export function createUserService(dependencies: UserDependencies) {
           code: 'DRAFT_TEXT_TOO_LONG',
           statusCode: 413,
         });
+      }
+
+      // Marks travel with the debounced save but only when they changed, so a
+      // save from a page holding a stale tray cannot overwrite a newer one.
+      if (payload.marks !== undefined) {
+        if (!Array.isArray(payload.marks) || JSON.stringify(payload.marks).length > MAX_DRAFT_TEXT_LENGTH) {
+          throw new AppError('Review marks are invalid or too long to store', {
+            code: 'DRAFT_MARKS_INVALID',
+            statusCode: 413,
+          });
+        }
+        dependencies.drafts.saveDraftMarks(userId, scope, payload.marks);
       }
 
       // The composer's debounced save sends only the text. Its copy of the

@@ -9,6 +9,7 @@ const noDrafts: UserDependencies['drafts'] = {
   getDrafts: () => [],
   saveDraft: () => undefined,
   saveDraftText: () => undefined,
+  saveDraftMarks: () => undefined,
   appendQueuedMessage: (_userId, _scope, message) => ({ queuedMessage: message, appended: false }),
   clearQueuedMessage: () => undefined,
   deleteDraft: () => undefined,

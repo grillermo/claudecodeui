@@ -227,6 +227,7 @@ CREATE TABLE IF NOT EXISTS session_drafts (
     draft_scope TEXT NOT NULL,
     draft_text TEXT NOT NULL DEFAULT '',
     queued_message TEXT,
+    marks TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, draft_scope),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
