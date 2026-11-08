@@ -11,6 +11,8 @@ import ChatMessageImages from '@/modules/chat/transcript/ChatMessageImages';
 import ChatMessageFiles from '@/modules/chat/transcript/ChatMessageFiles';
 import { Markdown } from '@/modules/chat/transcript/Markdown';
 import StreamingMarkdown from '@/modules/chat/transcript/StreamingMarkdown';
+import { renderReviewMarkdown } from '@/modules/chat/transcript/reviewMarkdown';
+import { PassageBadges, ReviewSegments, hasReviewBlock, hashText, messageTarget } from '@/modules/review';
 import MessageCopyControl from '@/modules/chat/transcript/MessageCopyControl';
 import MessageModelLabel from '@/modules/chat/transcript/MessageModelLabel';
 import MessageSpeakControl from '@/modules/chat/transcript/MessageSpeakControl';
@@ -113,12 +115,23 @@ const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, s
             {userCopyContent.trim().length > 0 || (!message.images?.length && !message.files?.length) ? (
               <div className="group max-w-full rounded-2xl rounded-br-md border border-border/60 bg-muted/60 px-3 py-2 text-foreground shadow-sm dark:bg-gray-800/60 sm:px-4">
                 <div dir="auto" className="break-words font-serif text-sm">
-                  <Markdown
-                    breaks
-                    className="prose prose-sm max-w-none font-serif dark:prose-invert"
-                  >
-                    {message.content}
-                  </Markdown>
+                  {hasReviewBlock(String(message.content || '')) ? (
+                    <div className="prose prose-sm max-w-none font-serif dark:prose-invert">
+                      <ReviewSegments
+                        content={String(message.content)}
+                        messageHash={hashText(String(message.content))}
+                        isStreaming={false}
+                        renderMarkdown={renderReviewMarkdown}
+                      />
+                    </div>
+                  ) : (
+                    <Markdown
+                      breaks
+                      className="prose prose-sm max-w-none font-serif dark:prose-invert"
+                    >
+                      {message.content}
+                    </Markdown>
+                  )}
                 </div>
                 <div className="mt-1 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                   {onEditMessage && message.transcriptAnchorId && (
@@ -389,11 +402,15 @@ const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, s
                   // One component for both states on purpose: swapping element
                   // types here remounted the whole reply the instant it finished.
                   return message.type === 'assistant' ? (
-                    <StreamingMarkdown
-                      content={content}
-                      isStreaming={Boolean(message.isStreaming)}
-                      className="prose prose-sm prose-gray max-w-none font-serif dark:prose-invert"
-                    />
+                    <>
+                      <StreamingMarkdown
+                        content={content}
+                        isStreaming={Boolean(message.isStreaming)}
+                        reviewSourceText={String(message.content || '')}
+                        className="prose prose-sm prose-gray max-w-none font-serif dark:prose-invert"
+                      />
+                      {!message.isStreaming && <PassageBadges target={messageTarget(String(message.content || ''))} />}
+                    </>
                   ) : (
                     <div className="whitespace-pre-wrap">
                       {content}

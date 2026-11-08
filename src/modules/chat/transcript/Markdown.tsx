@@ -22,6 +22,8 @@ type MarkdownProps = {
   className?: string;
   /** Render single newlines as hard line breaks (for user-typed messages). */
   breaks?: boolean;
+  /** Extra rehype plugins. Pass a stable array: it is a memo dependency. */
+  rehypePlugins?: unknown[];
 };
 
 // Links to the wider web (or in-page anchors) keep normal browser navigation;
@@ -276,7 +278,7 @@ const markdownComponents = {
  * render model-authored markdown with this module's shared prose styling,
  * code highlighting and table rules.
  */
-function MarkdownBodyRenderer({ children, breaks = false }: Omit<MarkdownProps, 'className'>) {
+function MarkdownBodyRenderer({ children, breaks = false, rehypePlugins: extraRehypePlugins }: Omit<MarkdownProps, 'className'>) {
   const content = useMemo(
     // The LaTeX pass runs second because it reads the code spans the fence pass
     // normalizes, and must leave the LaTeX inside them literal.
@@ -300,7 +302,12 @@ function MarkdownBodyRenderer({ children, breaks = false }: Omit<MarkdownProps, 
     },
     [breaks, hasMath],
   );
-  const rehypePlugins = useMemo(() => (hasMath ? [rehypeKatex] : EMPTY_PLUGINS), [hasMath]);
+  const rehypePlugins = useMemo(() => {
+    if (!hasMath && !extraRehypePlugins) {
+      return EMPTY_PLUGINS;
+    }
+    return [...(hasMath ? [rehypeKatex] : []), ...(extraRehypePlugins ?? [])] as any;
+  }, [extraRehypePlugins, hasMath]);
   const { openFileInEditor, openDirectory } = usePaletteOps();
 
   const components = useMemo(

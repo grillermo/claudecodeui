@@ -1,13 +1,20 @@
 import { useMemo } from 'react';
 
 import { MarkdownBody } from '@/modules/chat/transcript/Markdown';
+import { renderReviewMarkdown } from '@/modules/chat/transcript/reviewMarkdown';
 import { splitStreamingMarkdown } from '@/modules/chat/utils/streamingMarkdown';
+import { ReviewSegments, hasReviewBlock, hashText, messageTarget } from '@/modules/review';
 
 type StreamingMarkdownProps = {
   content: string;
   /** False once the reply is complete, which stops the splitting. */
   isStreaming: boolean;
   className?: string;
+  /**
+   * The message's raw text. Passing it enables review features: selections
+   * target this message, and `:::doc` blocks render as documents.
+   */
+  reviewSourceText?: string;
 };
 
 /**
@@ -48,14 +55,35 @@ export default function StreamingMarkdown({
   content,
   isStreaming,
   className,
+  reviewSourceText,
 }: StreamingMarkdownProps) {
-  const { settled, pending } = useMemo(
-    () => (isStreaming ? splitStreamingMarkdown(content) : { settled: content, pending: '' }),
-    [content, isStreaming],
+  // Never split a message holding a review block: a boundary inside `:::doc`
+  // would render its two halves as separate markdown.
+  const hasBlocks = useMemo(
+    () => reviewSourceText !== undefined && hasReviewBlock(content),
+    [content, reviewSourceText],
   );
+  const { settled, pending } = useMemo(
+    () => (isStreaming && !hasBlocks ? splitStreamingMarkdown(content) : { settled: content, pending: '' }),
+    [content, hasBlocks, isStreaming],
+  );
+  const target = reviewSourceText !== undefined && !isStreaming ? messageTarget(reviewSourceText) : undefined;
+
+  if (hasBlocks) {
+    return (
+      <div className={className} data-review-target={target}>
+        <ReviewSegments
+          content={content}
+          messageHash={hashText(reviewSourceText ?? content)}
+          isStreaming={isStreaming}
+          renderMarkdown={renderReviewMarkdown}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className={className}>
+    <div className={className} data-review-target={target}>
       {settled && <MarkdownBody>{settled}</MarkdownBody>}
       {pending && <MarkdownBody>{pending}</MarkdownBody>}
     </div>

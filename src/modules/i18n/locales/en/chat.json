@@ -369,6 +369,26 @@
     "cancel": "Cancel scheduled message",
     "dismiss": "Dismiss failure notice"
   },
+  "review": {
+    "changes_one": "{{count}} change",
+    "changes_other": "{{count}} changes",
+    "showChanges": "Show changes",
+    "hideChanges": "Hide changes",
+    "discussions_one": "{{count}} discussion",
+    "discussions_other": "{{count}} discussions",
+    "malformed": "Couldn't read this block",
+    "passageLost": "Passage no longer in the conversation",
+    "kind": { "comment": "comment", "question": "question", "redline": "redline" },
+    "comment": "Comment",
+    "ask": "Ask",
+    "redline": "Redline",
+    "commentPlaceholder": "Add a comment…",
+    "askPlaceholder": "Ask about this…",
+    "add": "Add",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "marksSaveFailed": "Couldn't save these marks. They'll be lost if you reload."
+  },
   "misc": {
     "copyToClipboard": "Copy to clipboard",
     "copyCommand": "Copy command",
