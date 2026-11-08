@@ -36,6 +36,18 @@ export type StoredQueuedMessage = {
   attachments?: unknown[];
 };
 
+/** A review mark waiting in the composer tray. The server stores these opaquely. */
+export type StoredDraftMark = {
+  /** Local identity; the sent id (`m1`) is assigned when the round is sent. */
+  key: string;
+  kind: 'comment' | 'question' | 'redline';
+  target: string;
+  quote: string;
+  before?: string;
+  after?: string;
+  note: string;
+};
+
 type DraftRecord = {
   text: string;
   queuedMessage: StoredQueuedMessage | null;
