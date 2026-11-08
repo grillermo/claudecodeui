@@ -536,7 +536,7 @@ export const api = {
     drafts: () => get('/api/user/drafts'),
     // Without `queuedMessage` only the text is written; the stored queued
     // message is left as it is.
-    saveDraft: (scope: string, draft: { text: string; queuedMessage?: unknown }) =>
+    saveDraft: (scope: string, draft: { text: string; queuedMessage?: unknown; marks?: unknown }) =>
       put('/api/user/drafts', { scope, ...draft }),
     // Appends to the scope's queued message on the server and returns the
     // message that is now queued.

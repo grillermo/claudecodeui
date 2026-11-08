@@ -51,6 +51,7 @@ export type StoredDraftMark = {
 type DraftRecord = {
   text: string;
   queuedMessage: StoredQueuedMessage | null;
+  marks: StoredDraftMark[];
 };
 
 /** Fired after any draft changes, from a local write or from a hydrate. */
@@ -65,12 +66,17 @@ const MIRROR_STORAGE_KEY = 'chat-drafts';
  */
 const SERVER_WRITE_DEBOUNCE_MS = 1_000;
 
-const EMPTY_DRAFT: DraftRecord = { text: '', queuedMessage: null };
+const NO_MARKS: StoredDraftMark[] = [];
+const EMPTY_DRAFT: DraftRecord = { text: '', queuedMessage: null, marks: NO_MARKS };
 
 const listeners = new Set<() => void>();
 
 let drafts = new Map<string, DraftRecord>();
 const pendingScopes = new Set<string>();
+// Scopes whose marks changed here and have not been written yet. Text-only
+// saves leave marks out, so a page with a stale tray cannot overwrite them.
+const pendingMarkScopes = new Set<string>();
+const failedMarkScopes = new Set<string>();
 let serverWriteTimer: ReturnType<typeof setTimeout> | null = null;
 // Counts this page's changes to each scope's queued message, so a hydrate that
 // was already in flight when one happened does not put back the older copy.
@@ -88,7 +94,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
 );
 
 const isEmptyDraft = (draft: DraftRecord): boolean => (
-  draft.text === '' && draft.queuedMessage === null
+  draft.text === '' && draft.queuedMessage === null && draft.marks.length === 0
+);
+
+const readStoredMarks = (value: unknown): StoredDraftMark[] => (
+  Array.isArray(value) ? value.filter(isRecord) as StoredDraftMark[] : NO_MARKS
 );
 
 function readMirror(): Map<string, DraftRecord> {
@@ -113,6 +123,7 @@ function readMirror(): Map<string, DraftRecord> {
         queuedMessage: isRecord(value.queuedMessage)
           ? (value.queuedMessage as StoredQueuedMessage)
           : null,
+        marks: readStoredMarks(value.marks),
       });
     }
     return restored;
@@ -145,21 +156,39 @@ function flushServerWrites(): void {
   pendingScopes.clear();
 
   for (const scope of scopes) {
-    // Text only: the server keeps the scope's queued message as it is, and
-    // drops the row itself once neither text nor a queued message is left.
-    // Deleting the row from here would also delete a message queued from
-    // another tab that this page has not heard about yet.
-    const text = drafts.get(scope)?.text ?? '';
+    // The server keeps the scope's queued message as it is, and drops the row
+    // itself once neither text, a queued message nor marks are left. Deleting
+    // the row from here would also delete a message queued from another tab
+    // that this page has not heard about yet. Marks are sent only when they
+    // changed here.
+    const record = drafts.get(scope);
+    const text = record?.text ?? '';
+    const sendMarks = pendingMarkScopes.delete(scope);
+    const marks = record?.marks ?? NO_MARKS;
+
+    const onFailure = (error: unknown) => {
+      console.error('Failed to save chat draft:', error);
+      if (sendMarks) {
+        failedMarkScopes.add(scope);
+        notifyListeners();
+      }
+    };
 
     // A save that fails must never surface as an unhandled rejection out of a
     // timer callback: the mirror already holds the draft, and the next
     // keystroke re-sends it.
     try {
-      void api.user.saveDraft(scope, { text }).catch((error: unknown) => {
-        console.error('Failed to save chat draft:', error);
-      });
+      void api.user.saveDraft(scope, sendMarks ? { text, marks } : { text })
+        .then((response) => {
+          if (sendMarks && !response.ok) {
+            onFailure(new Error(`HTTP ${response.status}`));
+          } else if (sendMarks && failedMarkScopes.delete(scope)) {
+            notifyListeners();
+          }
+        })
+        .catch(onFailure);
     } catch (error) {
-      console.error('Failed to save chat draft:', error);
+      onFailure(error);
     }
   }
 }
@@ -178,7 +207,7 @@ function setLocalDraft(scope: string, update: Partial<DraftRecord>): boolean {
   const current = drafts.get(scope) ?? EMPTY_DRAFT;
   const next: DraftRecord = { ...current, ...update };
 
-  if (next.text === current.text && next.queuedMessage === current.queuedMessage) {
+  if (next.text === current.text && next.queuedMessage === current.queuedMessage && next.marks === current.marks) {
     return false;
   }
 
@@ -252,6 +281,22 @@ export function writeDraftText(scope: string, text: string): void {
   if (setLocalDraft(scope, { text })) {
     queueServerWrite(scope);
   }
+}
+
+export function readDraftMarks(scope: string): StoredDraftMark[] {
+  return drafts.get(scope)?.marks ?? NO_MARKS;
+}
+
+export function writeDraftMarks(scope: string, marks: StoredDraftMark[]): void {
+  if (setLocalDraft(scope, { marks })) {
+    pendingMarkScopes.add(scope);
+    queueServerWrite(scope);
+  }
+}
+
+/** Whether the last write of this scope's marks failed. They stay in memory. */
+export function didDraftMarksSaveFail(scope: string): boolean {
+  return failedMarkScopes.has(scope);
 }
 
 export function readQueuedMessage(scope: string): StoredQueuedMessage | null {
@@ -348,7 +393,7 @@ export function subscribeToChatDrafts(listener: () => void): () => void {
  * staler server copy would delete what they are in the middle of writing.
  */
 export async function hydrateChatDrafts(): Promise<void> {
-  let serverDrafts: Array<{ scope?: unknown; text?: unknown; queuedMessage?: unknown }> = [];
+  let serverDrafts: Array<{ scope?: unknown; text?: unknown; queuedMessage?: unknown; marks?: unknown }> = [];
   const queueRevisionsAtRequest = new Map(queueRevisions);
 
   try {
@@ -380,6 +425,7 @@ export async function hydrateChatDrafts(): Promise<void> {
       queuedMessage: isRecord(draft.queuedMessage)
         ? (draft.queuedMessage as StoredQueuedMessage)
         : null,
+      marks: readStoredMarks(draft.marks),
     });
   }
 
@@ -394,6 +440,7 @@ export async function hydrateChatDrafts(): Promise<void> {
   );
   const locallyChangedScopes = new Set([
     ...pendingScopes,
+    ...pendingMarkScopes,
     ...[...queueRevisions.keys()].filter(queueChangedDuringRequest),
   ]);
   for (const scope of locallyChangedScopes) {
@@ -402,6 +449,7 @@ export async function hydrateChatDrafts(): Promise<void> {
     const next: DraftRecord = {
       text: pendingScopes.has(scope) ? local.text : server.text,
       queuedMessage: queueChangedDuringRequest(scope) ? local.queuedMessage : server.queuedMessage,
+      marks: pendingMarkScopes.has(scope) ? local.marks : server.marks,
     };
     if (isEmptyDraft(next)) {
       merged.delete(scope);
@@ -419,6 +467,8 @@ export async function hydrateChatDrafts(): Promise<void> {
 export function resetChatDrafts(): void {
   drafts = new Map();
   pendingScopes.clear();
+  pendingMarkScopes.clear();
+  failedMarkScopes.clear();
   queueRevisions.clear();
   queueRequests.clear();
   queueClears.clear();
