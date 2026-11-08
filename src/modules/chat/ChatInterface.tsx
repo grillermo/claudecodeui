@@ -8,6 +8,7 @@ import { useWebSocket } from '@/shared/context/WebSocketContext';
 import PermissionContext from '@/modules/chat/context/PermissionContext';
 import { MarkdownWorkspaceContext } from '@/modules/chat/context/MarkdownWorkspaceContext';
 import { TranscriptSessionContext } from '@/modules/chat/context/TranscriptSessionContext';
+import { ReviewContext, hasReviewBlock, useReviewSession } from '@/modules/review';
 import { api } from '@/shared/api';
 import type {
   ChatMessage,
@@ -185,6 +186,25 @@ function ChatInterface({
     onSessionEstablished?.(sessionId, context);
     onNavigateToSession?.(sessionId);
   }, [setCurrentSessionId, onSessionEstablished, onNavigateToSession]);
+
+  const review = useReviewSession(chatMessages, selectedSession?.id ?? currentSessionId ?? null);
+
+  // Versions and mark ids count across the whole session, but only the latest
+  // page is loaded at first. Once review content shows up, load the rest so a
+  // v3 is not numbered v1. Once per session, so a failed load cannot loop.
+  const reviewHistoryLoadedForRef = useRef<string | null>(null);
+  const reviewContentPresent = review.marks.length > 0
+    || chatMessages.some((message) => typeof message.content === 'string' && hasReviewBlock(message.content));
+  useEffect(() => {
+    const sessionId = selectedSession?.id;
+    if (!sessionId || !hasMoreMessages || !reviewContentPresent) {
+      return;
+    }
+    if (reviewHistoryLoadedForRef.current !== sessionId) {
+      reviewHistoryLoadedForRef.current = sessionId;
+      void loadAllMessages();
+    }
+  }, [hasMoreMessages, loadAllMessages, reviewContentPresent, selectedSession?.id]);
 
   const {
     input,
@@ -455,6 +475,7 @@ function ChatInterface({
 
 
   return (
+    <ReviewContext.Provider value={review}>
     <PermissionContext.Provider value={permissionContextValue}>
       <div className="flex h-full min-h-0 flex-col">
         <MarkdownWorkspaceContext.Provider value={markdownWorkspaceValue}>
@@ -621,6 +642,7 @@ function ChatInterface({
         onSelectProviderModel={selectProviderModel}
       />
     </PermissionContext.Provider>
+    </ReviewContext.Provider>
   );
 }
 

@@ -5,3 +5,4 @@ export { default as PassageBadges } from '@/modules/review/components/PassageBad
 export { hashText, messageTarget } from '@/modules/review/parsing/hashText';
 export { hasReviewBlock } from '@/modules/review/parsing/segments';
 export { ReviewContext, useReview } from '@/modules/review/state/ReviewContext';
+export { useReviewSession } from '@/modules/review/state/useReviewSession';
