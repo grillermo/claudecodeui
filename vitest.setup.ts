@@ -21,3 +21,8 @@ if (typeof window.matchMedia !== 'function') {
     dispatchEvent: () => false,
   })) as typeof window.matchMedia;
 }
+
+// jsdom ships no `CSS.escape`, which review uses to build attribute selectors.
+if (typeof CSS === 'undefined' || typeof CSS.escape !== 'function') {
+  (globalThis as any).CSS = { ...(globalThis as any).CSS, escape: (value: string) => value.replace(/["\\\]]/g, '\\$&') };
+}

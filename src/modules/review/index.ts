@@ -7,3 +7,4 @@ export { hasReviewBlock } from '@/modules/review/parsing/segments';
 export { ReviewContext, useReview } from '@/modules/review/state/ReviewContext';
 export { useReviewSession } from '@/modules/review/state/useReviewSession';
 export { default as SelectionToolbar } from '@/modules/review/components/SelectionToolbar';
+export { default as ReviewHighlights } from '@/modules/review/components/ReviewHighlights';

@@ -51,6 +51,7 @@ vi.mock('@/modules/chat/hooks/useChatProviderState', () => ({
 vi.mock('@/modules/chat/hooks/useChatSessionState', () => ({
   useChatSessionState: () => ({
     chatMessages: [],
+    scrollContainerRef: { current: null },
     currentSessionId: harness.sessionId,
     setCurrentSessionId: () => {},
     requestLatestMessages: async () => {},
