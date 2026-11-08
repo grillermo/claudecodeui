@@ -85,3 +85,43 @@ test('toolbar: redline adds at once, comment opens a popover', async () => {
   fireEvent.click(screen.getByTestId('review-note-add'));
   assert.deepEqual(addMark.mock.calls[1][0], { kind: 'comment', target: 'a@v1', quote: 'world', note: 'why' });
 });
+
+async function openComment(addMark = vi.fn()) {
+  const value = { index: EMPTY_REVIEW_INDEX, marks: [], addMark } as unknown as ReviewContextValue;
+  const host = mount('<div data-review-target="a@v1"><p>hello world</p></div>');
+  render(<ReviewContext.Provider value={value}><SelectionToolbar /></ReviewContext.Provider>);
+  const text = host.querySelector('p')!.firstChild!;
+  select(text, 0, text, 5);
+  fireEvent(document, new Event('selectionchange'));
+  fireEvent.click(await screen.findByTestId('review-comment'));
+  return addMark;
+}
+
+test('popover: Escape cancels, Ctrl+Enter submits', async () => {
+  const addMark = await openComment();
+  assert.ok(screen.getByRole('dialog'));
+  fireEvent.change(screen.getByTestId('review-note'), { target: { value: 'x' } });
+  fireEvent.keyDown(screen.getByTestId('review-note'), { key: 'Escape' });
+  assert.equal(screen.queryByTestId('review-note'), null);
+  assert.equal(addMark.mock.calls.length, 0);
+});
+
+test('popover: Ctrl+Enter submits the note', async () => {
+  const addMark = await openComment();
+  fireEvent.change(screen.getByTestId('review-note'), { target: { value: 'why' } });
+  fireEvent.keyDown(screen.getByTestId('review-note'), { key: 'Enter', ctrlKey: true });
+  assert.equal(addMark.mock.calls[0][0].note, 'why');
+});
+
+test('popover stays inside the viewport', async () => {
+  const original = Range.prototype.getBoundingClientRect;
+  Range.prototype.getBoundingClientRect = () => ({ top: 5000, left: 5000, bottom: 5010, right: 5100, width: 100, height: 10, x: 5000, y: 5000, toJSON: () => ({}) });
+  try {
+    await openComment();
+    const style = screen.getByRole('dialog').style;
+    assert.ok(parseFloat(style.left) <= window.innerWidth - 288 - 8);
+    assert.ok(parseFloat(style.top) <= window.innerHeight - 8);
+  } finally {
+    Range.prototype.getBoundingClientRect = original;
+  }
+});

@@ -5,9 +5,14 @@ import { resolveSelection, type ResolvedSelection } from '@/modules/review/selec
 import { useReview } from '@/modules/review/state/ReviewContext';
 import type { MarkKind } from '@/modules/review/types';
 
-type Anchored = { selection: ResolvedSelection; top: number; left: number };
+type Anchored = { selection: ResolvedSelection; range: Range };
 
 const TOOLBAR_OFFSET = 44;
+const EDGE = 8;
+const TOOLBAR_WIDTH = 208;
+const TOOLBAR_HEIGHT = 36;
+const POPOVER_WIDTH = 288;
+const POPOVER_HEIGHT = 140;
 
 function readAnchored(): Anchored | null {
   const domSelection = window.getSelection();
@@ -15,13 +20,22 @@ function readAnchored(): Anchored | null {
   if (!selection || !domSelection) {
     return null;
   }
-  const rect = domSelection.getRangeAt(0).getBoundingClientRect();
+  return { selection, range: domSelection.getRangeAt(0).cloneRange() };
+}
+
+/** Fixed position for an element beside the range, kept inside the viewport. */
+function place(range: Range, width: number, height: number) {
+  const rect = range.getBoundingClientRect();
   // Touch devices draw their own menu above a selection, so go below it there.
   const below = window.matchMedia('(pointer: coarse)').matches;
+  let top = below ? rect.bottom + 12 : rect.top - TOOLBAR_OFFSET;
+  if (top + height > window.innerHeight - EDGE) {
+    // No room below: flip above the selection.
+    top = rect.top - height - 4;
+  }
   return {
-    selection,
-    top: below ? rect.bottom + 12 : Math.max(8, rect.top - TOOLBAR_OFFSET),
-    left: Math.max(8, rect.left),
+    top: Math.max(EDGE, Math.min(top, window.innerHeight - height - EDGE)),
+    left: Math.max(EDGE, Math.min(rect.left, window.innerWidth - width - EDGE)),
   };
 }
 
@@ -34,11 +48,20 @@ export default function SelectionToolbar() {
   // focus), so the popover holds its own copy.
   const [composing, setComposing] = useState<(Anchored & { kind: MarkKind }) | null>(null);
   const [note, setNote] = useState('');
+  // Scrolling or resizing moves the passage; this re-renders to re-anchor.
+  const [, setLayoutTick] = useState(0);
 
   useEffect(() => {
     const onSelectionChange = () => setAnchored(readAnchored());
     document.addEventListener('selectionchange', onSelectionChange);
-    return () => document.removeEventListener('selectionchange', onSelectionChange);
+    const onLayout = () => setLayoutTick((tick) => tick + 1);
+    window.addEventListener('scroll', onLayout, true);
+    window.addEventListener('resize', onLayout);
+    return () => {
+      document.removeEventListener('selectionchange', onSelectionChange);
+      window.removeEventListener('scroll', onLayout, true);
+      window.removeEventListener('resize', onLayout);
+    };
   }, []);
 
   if (!review) {
@@ -67,16 +90,33 @@ export default function SelectionToolbar() {
   };
 
   if (composing) {
+    const position = place(composing.range, POPOVER_WIDTH, POPOVER_HEIGHT);
     return (
       <div
+        role="dialog"
+        aria-label={composing.kind === 'question'
+          ? t('review.askDialog', 'Ask about this passage')
+          : t('review.commentDialog', 'Comment on this passage')}
         className="fixed z-50 w-72 rounded-lg border border-border bg-popover p-2 shadow-lg"
-        style={{ top: composing.top, left: composing.left }}
+        style={{ top: position.top, left: position.left }}
       >
         <textarea
           autoFocus
           data-testid="review-note"
           value={note}
           onChange={(event) => setNote(event.target.value)}
+          aria-label={composing.kind === 'question'
+            ? t('review.askPlaceholder', 'Ask about this…')
+            : t('review.commentPlaceholder', 'Add a comment…')}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              closePopover();
+            } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+              event.preventDefault();
+              submitNote();
+            }
+          }}
           rows={3}
           placeholder={composing.kind === 'question'
             ? t('review.askPlaceholder', 'Ask about this…')
@@ -104,13 +144,14 @@ export default function SelectionToolbar() {
     return null;
   }
 
+  const position = place(anchored.range, TOOLBAR_WIDTH, TOOLBAR_HEIGHT);
   const buttonClass = 'rounded-md px-2 py-1 hover:bg-accent';
   return (
     <div
       // Keeps the click from collapsing the selection before it is read.
       onMouseDown={(event) => event.preventDefault()}
       className="fixed z-50 flex gap-0.5 rounded-lg border border-border bg-popover p-1 text-xs shadow-lg"
-      style={{ top: anchored.top, left: anchored.left }}
+      style={{ top: position.top, left: position.left }}
     >
       <button type="button" data-testid="review-comment" className={buttonClass} onClick={() => setComposing({ ...anchored, kind: 'comment' })}>
         {t('review.comment', 'Comment')}
