@@ -498,7 +498,7 @@ function ChatInterface({
   return (
     <ReviewContext.Provider value={review}>
     <SelectionToolbar />
-    <ReviewHighlights container={scrollContainerRef.current} />
+    <ReviewHighlights containerRef={scrollContainerRef} />
     <PermissionContext.Provider value={permissionContextValue}>
       <div className="flex h-full min-h-0 flex-col">
         <MarkdownWorkspaceContext.Provider value={markdownWorkspaceValue}>

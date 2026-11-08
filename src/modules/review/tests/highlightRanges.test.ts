@@ -45,3 +45,10 @@ test('registers both highlight groups', () => {
   assert.equal((registry.get('review-draft') as unknown[]).length, 1);
   assert.equal((registry.get('review-discussed') as unknown[]).length, 1);
 });
+
+test('skips text inside <del> and review chrome', () => {
+  const target = mount('<div><p>keep <del>struck</del><span data-review-chrome>badge</span> visible</p></div>');
+  assert.equal(findQuoteRange(target, { quote: 'struck' }), null);
+  assert.equal(findQuoteRange(target, { quote: 'badge' }), null);
+  assert.equal(findQuoteRange(target, { quote: 'visible' })?.toString(), 'visible');
+});
