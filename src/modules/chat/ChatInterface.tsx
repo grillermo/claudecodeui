@@ -8,7 +8,7 @@ import { useWebSocket } from '@/shared/context/WebSocketContext';
 import PermissionContext from '@/modules/chat/context/PermissionContext';
 import { MarkdownWorkspaceContext } from '@/modules/chat/context/MarkdownWorkspaceContext';
 import { TranscriptSessionContext } from '@/modules/chat/context/TranscriptSessionContext';
-import { ReviewContext, hasReviewBlock, useReviewSession } from '@/modules/review';
+import { ReviewContext, SelectionToolbar, hasReviewBlock, useReviewSession } from '@/modules/review';
 import { api } from '@/shared/api';
 import type {
   ChatMessage,
@@ -497,6 +497,7 @@ function ChatInterface({
 
   return (
     <ReviewContext.Provider value={review}>
+    <SelectionToolbar />
     <PermissionContext.Provider value={permissionContextValue}>
       <div className="flex h-full min-h-0 flex-col">
         <MarkdownWorkspaceContext.Provider value={markdownWorkspaceValue}>
