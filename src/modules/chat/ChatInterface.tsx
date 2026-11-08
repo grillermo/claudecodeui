@@ -193,18 +193,38 @@ function ChatInterface({
   // page is loaded at first. Once review content shows up, load the rest so a
   // v3 is not numbered v1. Once per session, so a failed load cannot loop.
   const reviewHistoryLoadedForRef = useRef<string | null>(null);
+  // Streaming rows are skipped: they settle into the same check once finished.
   const reviewContentPresent = review.marks.length > 0
-    || chatMessages.some((message) => typeof message.content === 'string' && hasReviewBlock(message.content));
+    || chatMessages.some((message) => (
+      !message.isStreaming && typeof message.content === 'string' && hasReviewBlock(message.content)
+    ));
   useEffect(() => {
     const sessionId = selectedSession?.id;
-    if (!sessionId || !hasMoreMessages || !reviewContentPresent) {
+    // loadAllMessages returns without fetching when inactive or already loading,
+    // and the messages must belong to this session, not the one just left. Only
+    // mark the session done once the call is actually made.
+    if (
+      !sessionId
+      || currentSessionId !== sessionId
+      || !isActive
+      || isLoadingAllMessages
+      || !hasMoreMessages
+      || !reviewContentPresent
+      || reviewHistoryLoadedForRef.current === sessionId
+    ) {
       return;
     }
-    if (reviewHistoryLoadedForRef.current !== sessionId) {
-      reviewHistoryLoadedForRef.current = sessionId;
-      void loadAllMessages();
-    }
-  }, [hasMoreMessages, loadAllMessages, reviewContentPresent, selectedSession?.id]);
+    reviewHistoryLoadedForRef.current = sessionId;
+    void loadAllMessages();
+  }, [
+    currentSessionId,
+    hasMoreMessages,
+    isActive,
+    isLoadingAllMessages,
+    loadAllMessages,
+    reviewContentPresent,
+    selectedSession?.id,
+  ]);
 
   const {
     input,
