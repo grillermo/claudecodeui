@@ -19,5 +19,6 @@ test('slash commands, attachments, queued resends and other tools do not', () =>
   assert.equal(findPlanRequestToDeny({ ...base, text: '/compact' }), null);
   assert.equal(findPlanRequestToDeny({ ...base, hasAttachments: true }), null);
   assert.equal(findPlanRequestToDeny({ ...base, isQueuedResend: true }), null);
+  assert.equal(findPlanRequestToDeny({ ...base, isEditingEarlierMessage: true }), null);
   assert.equal(findPlanRequestToDeny({ ...base, requests: [other] }), null);
 });

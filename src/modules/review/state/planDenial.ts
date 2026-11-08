@@ -5,6 +5,8 @@ type FindPlanRequestInput<T> = {
   text: string;
   hasAttachments: boolean;
   isQueuedResend: boolean;
+  /** Editing an earlier message replaces it; it is not an answer to the plan. */
+  isEditingEarlierMessage?: boolean;
 };
 
 /**
@@ -13,8 +15,8 @@ type FindPlanRequestInput<T> = {
  * path, as does a slash command, which is an instruction to the CLI.
  */
 export function findPlanRequestToDeny<T extends PermissionRequestLike>(input: FindPlanRequestInput<T>): T | null {
-  const { requests, text, hasAttachments, isQueuedResend } = input;
-  if (hasAttachments || isQueuedResend || text.trimStart().startsWith('/')) {
+  const { requests, text, hasAttachments, isQueuedResend, isEditingEarlierMessage } = input;
+  if (hasAttachments || isQueuedResend || isEditingEarlierMessage || text.trimStart().startsWith('/')) {
     return null;
   }
   return requests.find((request) => (

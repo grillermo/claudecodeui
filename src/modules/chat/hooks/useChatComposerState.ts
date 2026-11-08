@@ -904,6 +904,7 @@ export function useChatComposerState({
         text: currentInput,
         hasAttachments: currentAttachments.length > 0 || previouslyUploadedAttachments.length > 0,
         isQueuedResend: Boolean(queuedSubmission),
+        isEditingEarlierMessage: Boolean(editingAnchorId),
       });
       if (planRequest) {
         sendMessage({
