@@ -82,3 +82,29 @@ test('a failed save is reported and cleared by the next good one', async () => {
   await flush();
   assert.equal(store.didDraftMarksSaveFail('s1'), false);
 });
+
+test('hydrate after a failed marks save keeps the local marks', async () => {
+  const store = await loadStore();
+  saveFails = true;
+  store.writeDraftMarks('s1', [MARK]);
+  await flush();
+  serverDrafts = [{ scope: 's1', text: '', queuedMessage: null, marks: [] }];
+  await store.hydrateChatDrafts();
+  assert.deepEqual(store.readDraftMarks('s1'), [MARK]);
+  assert.equal(store.didDraftMarksSaveFail('s1'), true);
+});
+
+test('the next flush after a failed marks save sends the marks again', async () => {
+  const store = await loadStore();
+  saveFails = true;
+  store.writeDraftMarks('s1', [MARK]);
+  await flush();
+  saveFails = false;
+  saved.length = 0;
+  store.writeDraftText('s1', 'hello');
+  await flush();
+  assert.deepEqual(saved, [{ scope: 's1', text: 'hello', marks: [MARK] }]);
+  assert.equal(store.didDraftMarksSaveFail('s1'), false);
+  await flush();
+  assert.equal(saved.length, 1);
+});

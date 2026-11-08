@@ -66,7 +66,8 @@ const MIRROR_STORAGE_KEY = 'chat-drafts';
  */
 const SERVER_WRITE_DEBOUNCE_MS = 1_000;
 
-const NO_MARKS: StoredDraftMark[] = [];
+// Shared and frozen so no caller can mutate the empty value for every scope.
+const NO_MARKS = Object.freeze([]) as unknown as StoredDraftMark[];
 const EMPTY_DRAFT: DraftRecord = { text: '', queuedMessage: null, marks: NO_MARKS };
 
 const listeners = new Set<() => void>();
@@ -163,7 +164,9 @@ function flushServerWrites(): void {
     // changed here.
     const record = drafts.get(scope);
     const text = record?.text ?? '';
-    const sendMarks = pendingMarkScopes.delete(scope);
+    // A scope whose last marks save failed sends them again with this write.
+    // No timer is armed for the retry, so a persistent failure cannot loop.
+    const sendMarks = pendingMarkScopes.delete(scope) || failedMarkScopes.has(scope);
     const marks = record?.marks ?? NO_MARKS;
 
     const onFailure = (error: unknown) => {
@@ -441,6 +444,7 @@ export async function hydrateChatDrafts(): Promise<void> {
   const locallyChangedScopes = new Set([
     ...pendingScopes,
     ...pendingMarkScopes,
+    ...failedMarkScopes,
     ...[...queueRevisions.keys()].filter(queueChangedDuringRequest),
   ]);
   for (const scope of locallyChangedScopes) {
@@ -449,7 +453,7 @@ export async function hydrateChatDrafts(): Promise<void> {
     const next: DraftRecord = {
       text: pendingScopes.has(scope) ? local.text : server.text,
       queuedMessage: queueChangedDuringRequest(scope) ? local.queuedMessage : server.queuedMessage,
-      marks: pendingMarkScopes.has(scope) ? local.marks : server.marks,
+      marks: pendingMarkScopes.has(scope) || failedMarkScopes.has(scope) ? local.marks : server.marks,
     };
     if (isEmptyDraft(next)) {
       merged.delete(scope);
