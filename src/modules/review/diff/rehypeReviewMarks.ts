@@ -18,7 +18,7 @@ const CLASS_NAMES: Record<'ins' | 'del', string[]> = {
 const wrap = (mode: 'ins' | 'del', child: HastNode): HastNode => ({
   type: 'element',
   tagName: mode,
-  properties: { className: CLASS_NAMES[mode] },
+  properties: { className: [...CLASS_NAMES[mode]] },
   children: [child],
 });
 

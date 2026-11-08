@@ -7,9 +7,11 @@ export const INS_CLOSE = '\ue001';
 export const DEL_OPEN = '\ue002';
 export const DEL_CLOSE = '\ue003';
 const SENTINELS = /[\ue000-\ue003]/g;
+const normalize = (text: string) => text.replace(/\r\n?/g, '\n').replace(SENTINELS, '');
 
 const MAX_BLOCKS_FOR_WORD_DIFF = 2000;
 const SIMILARITY_TO_PAIR = 0.4;
+const MAX_PAIRINGS_PER_HUNK = 200_000;
 
 const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s/;
 const HEADING = /^#{1,6}\s/;
@@ -91,9 +93,9 @@ export function splitMarkdownBlocks(markdown: string): MarkdownBlock[] {
   return blocks;
 }
 
-function similarity(a: string, b: string): number {
-  const wordsA = new Set(a.toLowerCase().split(/\W+/).filter(Boolean));
-  const wordsB = new Set(b.toLowerCase().split(/\W+/).filter(Boolean));
+const wordSet = (text: string) => new Set(text.toLowerCase().split(/\W+/).filter(Boolean));
+
+function similarity(wordsA: Set<string>, wordsB: Set<string>): number {
   if (wordsA.size === 0 || wordsB.size === 0) {
     return 0;
   }
@@ -105,6 +107,8 @@ function similarity(a: string, b: string): number {
   }
   return (2 * shared) / (wordsA.size + wordsB.size);
 }
+
+const blockPrefix = (text: string) => BLOCK_PREFIX.exec(text)?.[0] ?? '';
 
 function wrapWhole(text: string, open: string, close: string): string {
   const prefix = BLOCK_PREFIX.exec(text)?.[0] ?? '';
@@ -200,13 +204,19 @@ function emitHunk(
 ): number {
   let changes = 0;
   let nextAdded = 0;
+  const skipPairing = wholeBlocksOnly || removed.length * added.length > MAX_PAIRINGS_PER_HUNK;
+  const addedWords = skipPairing ? [] : added.map((b) => wordSet(b.text));
   for (const block of removed) {
     let match = -1;
-    if (!wholeBlocksOnly && block.kind !== 'table') {
+    if (!skipPairing && block.kind !== 'table') {
+      const removedWords = wordSet(block.text);
+      const removedPrefix = blockPrefix(block.text);
       for (let index = nextAdded; index < added.length; index++) {
         const candidate = added[index];
+        // A changed marker (`-` to `*`, `#` to `##`, `1.` to `2.`) is replaced whole so the markup survives.
         if (candidate.kind === block.kind
-          && (block.kind === 'code' || similarity(block.text, candidate.text) >= SIMILARITY_TO_PAIR)) {
+          && (block.kind === 'code' || (blockPrefix(candidate.text) === removedPrefix
+            && similarity(removedWords, addedWords[index]) >= SIMILARITY_TO_PAIR))) {
           match = index;
           break;
         }
@@ -237,8 +247,8 @@ function emitHunk(
 }
 
 export function diffDocument(previous: string, next: string): DocumentDiff {
-  const before = splitMarkdownBlocks(previous.replace(SENTINELS, ''));
-  const after = splitMarkdownBlocks(next.replace(SENTINELS, ''));
+  const before = splitMarkdownBlocks(normalize(previous));
+  const after = splitMarkdownBlocks(normalize(next));
   const wholeBlocksOnly = Math.max(before.length, after.length) > MAX_BLOCKS_FOR_WORD_DIFF;
   const parts = diffArrays(before.map((b) => b.text), after.map((b) => b.text));
 
