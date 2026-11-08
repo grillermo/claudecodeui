@@ -74,6 +74,7 @@ const render = (processingSessions: SessionActivityMap) => {
       addMessage: () => undefined,
       setIsUserScrolledUp: () => undefined,
       setPendingPermissionRequests: () => undefined,
+      review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }),
   );
   const sends = () => sent.filter((message) => message.type === 'chat.send');

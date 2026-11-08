@@ -59,6 +59,7 @@ const submit = async (provider: LLMProvider) => {
       addMessage: () => undefined,
       setIsUserScrolledUp: () => undefined,
       setPendingPermissionRequests: () => undefined,
+      review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }),
   );
 

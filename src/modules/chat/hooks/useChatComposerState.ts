@@ -31,8 +31,10 @@ import { describeBackgroundTask, ownBackgroundTasks } from '@/modules/chat/utils
 import { useFileMentions } from '@/modules/chat/hooks/useFileMentions';
 import { useInputHistory } from '@/modules/chat/hooks/useInputHistory';
 import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';
+import { prepareSubmission, type ReviewContextValue } from '@/modules/review';
 
 type UseChatComposerStateArgs = {
+  review: ReviewContextValue;
   selectedProject: Project | null;
   selectedSession: ProjectSession | null;
   currentSessionId: string | null;
@@ -234,6 +236,7 @@ export function useChatComposerState({
   addMessage,
   setIsUserScrolledUp,
   setPendingPermissionRequests,
+  review,
 }: UseChatComposerStateArgs) {
   const { t } = useTranslation('chat');
   // The composer text together with the chat scope it belongs to. They are one
@@ -283,6 +286,10 @@ export function useChatComposerState({
       submitOptions?: SubmitOptions,
     ) => Promise<void>) | null
   >(null);
+  // Read through a ref: the tray changes independently of submitMessage's other
+  // dependencies, and a rebuilt submit handler would restart its debounces.
+  const reviewRef = useRef(review);
+  reviewRef.current = review;
   const inputValueRef = useRef(input);
   const selectedProjectId = selectedProject?.projectId;
   // Prefer the stable backend-allocated id (selectedSession.id) but fall back
@@ -866,7 +873,13 @@ export function useChatComposerState({
       submitOptions?: SubmitOptions,
     ) => {
       event.preventDefault();
-      const currentInput = queuedSubmission?.content ?? inputValueRef.current;
+      const typedInput = queuedSubmission?.content ?? inputValueRef.current;
+      const { text: currentInput, consumedMarks } = prepareSubmission({
+        typed: typedInput,
+        hasMarks: reviewRef.current.marks.length > 0,
+        isQueuedResend: Boolean(queuedSubmission),
+        composeFeedback: reviewRef.current.composeFeedback,
+      });
       const currentAttachments = queuedSubmission?.attachments ?? attachedFiles;
       const previouslyUploadedAttachments = queuedSubmission?.uploadedAttachments ?? [];
       if (
@@ -909,6 +922,9 @@ export function useChatComposerState({
           return;
         }
 
+        if (consumedMarks) {
+          reviewRef.current.clearMarks();
+        }
         await queueMessage({
           content: currentInput,
           attachments: currentAttachments,
@@ -1049,6 +1065,9 @@ export function useChatComposerState({
             return;
           }
           // Attachments were uploaded above; queue the same descriptors.
+          if (consumedMarks) {
+            reviewRef.current.clearMarks();
+          }
           await queueMessage({
             content: currentInput,
             attachments: currentAttachments,
@@ -1087,6 +1106,9 @@ export function useChatComposerState({
       // One message shape for every provider. The backend resolves the
       // provider, project path, and provider-native resume id from the
       // session row; `options` only carries composer-level preferences.
+      if (consumedMarks) {
+        reviewRef.current.clearMarks();
+      }
       sendMessage({
         // Replacing an already-sent message is its own frame: it changes the
         // shape of the conversation, so it gets validated separately and can

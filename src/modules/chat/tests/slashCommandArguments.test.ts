@@ -65,6 +65,7 @@ const renderComposer = () => {
       addMessage: () => undefined,
       setIsUserScrolledUp: () => undefined,
       setPendingPermissionRequests: () => undefined,
+      review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }));
   return { view, chatSends: () => sent.filter((message) => message.type === 'chat.send') };
 };

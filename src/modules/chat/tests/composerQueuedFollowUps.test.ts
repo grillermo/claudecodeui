@@ -170,6 +170,7 @@ const render = (initialProps: Partial<Props> = {}) => {
       },
       setIsUserScrolledUp: () => undefined,
       setPendingPermissionRequests: () => undefined,
+      review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }),
     { initialProps: { session: SESSION_1, isLoading: true, model: 'model-1', ...initialProps } },
   );

@@ -26,6 +26,7 @@ import {
   PromptInputButton,
   PromptInputSubmit,
 } from '@/modules/chat/composer/PromptInput';
+import { MarksTray } from '@/modules/review';
 import CommandMenu from '@/modules/chat/composer/CommandMenu';
 import ActivityIndicator from '@/modules/chat/composer/ActivityIndicator';
 import ComposerAttachment from '@/modules/chat/composer/ComposerAttachment';
@@ -336,6 +337,8 @@ export default function ChatComposer({
           onDelete={onDeleteQueuedDraft}
         />
       )}
+
+      <MarksTray />
 
       {!hasQuestionPanel && <div className="relative mx-auto max-w-[54.25rem]">
         {showFileDropdown && filteredFiles.length > 0 && (

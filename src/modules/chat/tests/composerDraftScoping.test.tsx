@@ -62,6 +62,7 @@ const renderComposer = (selectedSession: ProjectSession | null) => renderHook(
     addMessage: () => undefined,
     setIsUserScrolledUp: () => undefined,
     setPendingPermissionRequests: () => undefined,
+    review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
   }),
   { initialProps: { session: selectedSession } },
 );

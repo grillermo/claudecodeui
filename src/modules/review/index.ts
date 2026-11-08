@@ -8,3 +8,6 @@ export { ReviewContext, useReview } from '@/modules/review/state/ReviewContext';
 export { useReviewSession } from '@/modules/review/state/useReviewSession';
 export { default as SelectionToolbar } from '@/modules/review/components/SelectionToolbar';
 export { default as ReviewHighlights } from '@/modules/review/components/ReviewHighlights';
+export { default as MarksTray } from '@/modules/review/components/MarksTray';
+export { prepareSubmission } from '@/modules/review/state/prepareSubmission';
+export type { ReviewContextValue } from '@/modules/review/state/ReviewContext';

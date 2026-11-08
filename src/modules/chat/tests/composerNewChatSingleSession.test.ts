@@ -70,6 +70,7 @@ const renderComposer = (initialSession: ProjectSession | null) => {
       addMessage: () => undefined,
       setIsUserScrolledUp: () => undefined,
       setPendingPermissionRequests: () => undefined,
+      review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
     }),
   { initialProps: { session: initialSession } });
   return { view, established, chatSends: () => sent.filter((message) => message.type === 'chat.send') };

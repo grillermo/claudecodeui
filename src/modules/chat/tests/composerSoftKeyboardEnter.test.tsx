@@ -102,6 +102,7 @@ const renderComposer = (sendMessage: ReturnType<typeof vi.fn>, sendByCtrlEnter?:
     addMessage: () => undefined,
     setIsUserScrolledUp: () => undefined,
     setPendingPermissionRequests: () => undefined,
+    review: { marks: [], composeFeedback: (t: string) => t, clearMarks: () => {} } as never,
   }),
 );
 
