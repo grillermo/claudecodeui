@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { useReview } from '@/modules/review/state/ReviewContext';
 
+const shorten = (quote: string) => (quote.length > 40 ? `${quote.slice(0, 40)}…` : quote);
+
 /** Above the composer: everything that will go with the next message. */
 export default function MarksTray() {
   const { t } = useTranslation('chat');
@@ -23,6 +25,7 @@ export default function MarksTray() {
             {mark.kind !== 'redline' && (
               <textarea
                 data-testid={`review-tray-note-${mark.key}`}
+                aria-label={t('review.noteFor', 'Note for {{kind}}: {{quote}}', { kind: t(`review.kind.${mark.kind}`, mark.kind), quote: shorten(mark.quote) })}
                 value={mark.note}
                 rows={1}
                 onChange={(event) => review.updateMark(mark.key, event.target.value)}
@@ -33,7 +36,7 @@ export default function MarksTray() {
           <button
             type="button"
             data-testid={`review-tray-remove-${mark.key}`}
-            aria-label={t('review.remove', 'Remove')}
+            aria-label={`${t('review.remove', 'Remove')} ${t(`review.kind.${mark.kind}`, mark.kind)}: ${shorten(mark.quote)}`}
             onClick={() => review.removeMark(mark.key)}
             className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
           >
@@ -42,7 +45,7 @@ export default function MarksTray() {
         </div>
       ))}
       {review.saveFailed && (
-        <div data-testid="review-tray-save-failed" className="px-1 text-amber-600 dark:text-amber-400">
+        <div data-testid="review-tray-save-failed" role="status" className="px-1 text-amber-600 dark:text-amber-400">
           {t('review.marksSaveFailed', "Couldn't save these marks. They'll be lost if you reload.")}
         </div>
       )}

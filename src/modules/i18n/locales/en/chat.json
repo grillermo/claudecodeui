@@ -387,6 +387,7 @@
     "add": "Add",
     "cancel": "Cancel",
     "remove": "Remove",
+    "noteFor": "Note for {{kind}}: {{quote}}",
     "marksSaveFailed": "Couldn't save these marks. They'll be lost if you reload."
   },
   "misc": {
