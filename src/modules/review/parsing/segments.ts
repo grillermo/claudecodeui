@@ -71,10 +71,11 @@ export function parseReviewSegments(
   text: string,
   options: { streaming?: boolean } = {},
 ): ReviewSegment[] {
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const segments: ReviewSegment[] = [];
   let prose: string[] = [];
   let fence: Fence | null = null;
+  // Counts only real docs: malformed blocks do not take an ordinal.
   let ordinal = 0;
 
   const flushProse = () => {
@@ -122,6 +123,8 @@ export function parseReviewSegments(
       continue;
     }
 
+    // An unclosed feedback block is malformed even while streaming: users write
+    // feedback, it is not streamed, so there is no open state as for docs.
     const marks = closer === -1 ? null : parseFeedbackBody(body);
     segments.push(marks ? { type: 'feedback', marks } : { type: 'malformed', raw });
   }

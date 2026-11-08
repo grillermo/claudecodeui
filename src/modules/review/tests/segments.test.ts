@@ -72,3 +72,12 @@ test('hashText is stable and 8 hex characters', () => {
   assert.notEqual(hashText('hello'), hashText('hello!'));
   assert.equal(messageTarget('hello'), `msg:${hashText('hello')}`);
 });
+
+test('CRLF line endings still produce blocks', () => {
+  const segments = parseReviewSegments(':::doc id=a\r\nbody\r\n:::\r\nafter');
+  assert.deepEqual(segments.map((s) => s.type), ['doc', 'markdown']);
+  const doc = segments[0];
+  assert.ok(doc.type === 'doc');
+  assert.equal(doc.id, 'a');
+  assert.equal(doc.body, 'body');
+});
