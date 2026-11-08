@@ -29,6 +29,7 @@ import {
   CLAUDE_PREDEFINED_MODELS,
   CLAUDE_ULTRACODE_EFFORT
 } from '@/modules/providers/list/claude/claude-models.provider.js';
+import { REVIEW_INSTRUCTIONS } from '@/modules/providers/list/claude/review-instructions.js';
 import { resolveClaudeCodeExecutablePath } from '@/shared/claude-cli-path.js';
 import { withClaudeConfigDir, withClaudeConfigDirForTranscript } from '@/shared/claude-config-dirs.js';
 import {
@@ -338,7 +339,7 @@ export function buildClaudeSdkEnv(hostEnv: NodeJS.ProcessEnv = process.env): Nod
   };
 }
 
-function mapCliOptionsToSDK(options: AnyRecord = {}) {
+export function mapCliOptionsToSDK(options: AnyRecord = {}) {
   const { providerSessionId, cwd, toolsSettings, permissionMode, effort, resumeAnchorId, resumeFromScratch } = options;
 
   const sdkOptions: AnyRecord = {};
@@ -403,9 +404,12 @@ function mapCliOptionsToSDK(options: AnyRecord = {}) {
     options.effortModels || CLAUDE_PREDEFINED_MODELS,
   ));
 
+  // An unattended run (the agent API, commit messages) has no reviewer and no
+  // UI to read these blocks, so it keeps the stock prompt.
   sdkOptions.systemPrompt = {
     type: 'preset',
-    preset: 'claude_code'
+    preset: 'claude_code',
+    ...(options.unattended ? {} : { append: REVIEW_INSTRUCTIONS }),
   };
 
   sdkOptions.settingSources = ['project', 'user', 'local'];
