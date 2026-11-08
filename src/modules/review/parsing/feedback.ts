@@ -4,8 +4,7 @@ import type { FeedbackMark, MarkAnchor, MarkKind } from '@/modules/review/types'
 const HEADER = /^\[(m\d+) (comment|question|redline) (\S+)\] (.*)$/;
 const ANCHOR = /^(?:…(.*?) )?"(.*)"(?: (.*?)…)?$/;
 /** Note lines that would read as structure get one leading space when written. */
-const STRUCTURAL_LINE = /^(:::|\[m\d+ )/;
-const ESCAPED_STRUCTURAL_LINE = /^ (:::|\[m\d+ )/;
+const STRUCTURAL_LINE = /^ *(:::|\[m\d+ )/;
 
 const oneLine = (text: string): string => text.replace(/\s+/g, ' ').trim();
 /** Context sits outside the quotes, so a `"` in it would confuse the anchor. */
@@ -46,7 +45,7 @@ export function parseFeedbackBody(body: string): FeedbackMark[] | null {
     if (/^\[m\d+ /.test(line)) {
       return null;
     }
-    current.noteLines.push(ESCAPED_STRUCTURAL_LINE.test(line) ? line.slice(1) : line);
+    current.noteLines.push(STRUCTURAL_LINE.test(line.slice(1)) && line.startsWith(' ') ? line.slice(1) : line);
   }
   if (marks.length === 0) {
     return null;
@@ -57,6 +56,7 @@ export function parseFeedbackBody(body: string): FeedbackMark[] | null {
   }));
 }
 
+/** Quotes and context are whitespace-collapsed on write, by design. */
 function writeMark(mark: FeedbackMark): string {
   const quote = `"${oneLine(mark.quote)}"`;
   const anchor = [
@@ -77,6 +77,10 @@ function writeMark(mark: FeedbackMark): string {
 }
 
 export function serializeFeedback(marks: FeedbackMark[]): string {
+  // An empty block would read back as null, so write nothing.
+  if (marks.length === 0) {
+    return '';
+  }
   return `:::feedback\n${marks.map(writeMark).join('\n\n')}\n:::`;
 }
 

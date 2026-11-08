@@ -67,3 +67,18 @@ test('reads a block with CRLF line endings', () => {
   assert.equal(feedback.marks.length, 3);
   assert.equal(feedback.marks[0].note, 'Use files.chiq.me instead, these need to open on my phone.');
 });
+
+test('round-trips note lines that already start with spaces before structure', () => {
+  const marks: FeedbackMark[] = [
+    { id: 'm1', kind: 'comment', target: 't@v1', quote: 'q', note: 'a\n :::\n  [m2 x\nb' },
+  ];
+  const [segment] = parseReviewSegments(serializeFeedback(marks));
+  assert.ok(segment.type === 'feedback');
+  assert.deepEqual(segment.marks, marks);
+});
+
+test('empty input is unreadable and writes nothing', () => {
+  assert.equal(parseFeedbackBody(''), null);
+  assert.equal(parseFeedbackBody('  \n\n'), null);
+  assert.equal(serializeFeedback([]), '');
+});
