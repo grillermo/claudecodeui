@@ -636,6 +636,8 @@ export function useSessionStore() {
     opts: {
       limit?: number;
       canRequest?: CanRequestHistory;
+      /** Holds the downloaded page back until the caller is ready to show it. */
+      beforeApply?: () => Promise<void>;
     } = {},
   ) => {
     const slot = getSlot(sessionId);
@@ -658,6 +660,8 @@ export function useSessionStore() {
             limit: opts.limit ?? SESSION_MESSAGES_PAGE_SIZE,
             offset: slot.offset,
           });
+          await opts.beforeApply?.();
+          if (!canRequest()) break;
           const olderMerge = mergeOlderServerPage(cachedMessages, data.messages);
           const shiftedWhileFetching = (
             data.total !== expectedTotal

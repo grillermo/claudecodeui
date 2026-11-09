@@ -11,8 +11,12 @@ import { normalizedToChatMessages } from '@/modules/chat/hooks/useChatMessages';
 import { findSearchTargetIndex, resolveSearchWindowSize } from '@/modules/chat/utils/searchTargetLocator';
 import { readSelectedProvider } from '@/shared/selectedProvider';
 import type { SearchTarget } from '@/modules/chat/utils/searchTargetLocator';
+import { waitForScrollToSettle } from '@/modules/chat/utils/waitForScrollToSettle';
 
 const INITIAL_VISIBLE_MESSAGES = 100;
+
+/** Older history starts downloading this far from the top, before the user runs out of content. */
+const OLDER_MESSAGES_PRELOAD_PX = 1500;
 
 /** Messages kept below a search hit so it lands mid-viewport rather than at the edge. */
 const SEARCH_TARGET_CONTEXT_MESSAGES = 20;
@@ -236,6 +240,7 @@ export function useChatSessionState({
    * time, a scroll-up inside that window is silently undone.
    */
   const isUserScrolledUpRef = useRef(false);
+  const isTouchingTranscriptRef = useRef(false);
   const isLoadingMoreRef = useRef(false);
   const allMessagesLoadedRef = useRef(false);
   const topLoadLockRef = useRef(false);
@@ -479,7 +484,6 @@ export function useChatSessionState({
 
       isLoadingMoreRef.current = true;
       setIsLoadingMoreMessages(true);
-      const scrollRestoreState = captureScrollRestoreState(container);
 
       try {
         const result = await sessionStore.fetchMore(selectedSession.id, {
@@ -488,6 +492,7 @@ export function useChatSessionState({
             isActiveRef.current
             && activeSessionIdRef.current === selectedSession.id
           ),
+          beforeApply: () => waitForScrollToSettle(container, () => isTouchingTranscriptRef.current),
         });
         const { slot, prependedCount } = result;
         setHasMoreMessages(slot.hasMore);
@@ -510,7 +515,10 @@ export function useChatSessionState({
           return false;
         }
 
-        pendingScrollRestoreRef.current = scrollRestoreState;
+        // Captured after the fetch, not before it: the user keeps scrolling
+        // while the page downloads, and restoring the older position would
+        // pull the transcript back. The new rows are not committed yet.
+        pendingScrollRestoreRef.current = captureScrollRestoreState(container);
         setVisibleMessageCount((prev) => prev + SESSION_MESSAGES_PAGE_SIZE);
         if (!slot.hasMore) {
           allMessagesLoadedRef.current = true;
@@ -543,6 +551,7 @@ export function useChatSessionState({
     };
 
     const scrolledNearTop = container.scrollTop < 100;
+    const withinPreloadRange = container.scrollTop < OLDER_MESSAGES_PRELOAD_PX;
 
     // "Load all" prompt: appear (with fade-in) when the user reaches the top
     if (scrolledNearTop && hasMoreMessages && !allMessagesLoadedRef.current) {
@@ -561,7 +570,7 @@ export function useChatSessionState({
     }
 
     if (!allMessagesLoadedRef.current) {
-      if (!scrolledNearTop) { topLoadLockRef.current = false; return; }
+      if (!withinPreloadRange) { topLoadLockRef.current = false; return; }
       if (topLoadLockRef.current) {
         if (container.scrollTop > 20) topLoadLockRef.current = false;
         return;
@@ -580,6 +589,13 @@ export function useChatSessionState({
     const container = scrollContainerRef.current;
     if (pendingScrollRestoreRef.current) {
       const { height, top, anchor, anchorOffset } = pendingScrollRestoreRef.current;
+      // iOS momentum scrolling keeps its own position and overwrites a scrollTop
+      // set while it runs, which dropped the user at the top of the prepended
+      // page. Disabling overflow for a frame ends the momentum so the write holds.
+      container.style.overflowY = 'hidden';
+      requestAnimationFrame(() => {
+        container.style.overflowY = '';
+      });
       if (anchor?.isConnected && anchorOffset !== null) {
         const nextAnchorOffset = (
           anchor.getBoundingClientRect().top
@@ -1019,8 +1035,18 @@ export function useChatSessionState({
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
+    const markTouching = () => { isTouchingTranscriptRef.current = true; };
+    const markNotTouching = () => { isTouchingTranscriptRef.current = false; };
     container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener('touchstart', markTouching, { passive: true });
+    container.addEventListener('touchend', markNotTouching, { passive: true });
+    container.addEventListener('touchcancel', markNotTouching, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('touchstart', markTouching);
+      container.removeEventListener('touchend', markNotTouching);
+      container.removeEventListener('touchcancel', markNotTouching);
+    };
   }, [handleScroll]);
 
   // "Load all" overlay visibility is driven by scroll-to-top in handleScroll;
