@@ -3,6 +3,7 @@ import webPush from 'web-push';
 import { notificationPreferencesDb, pushSubscriptionsDb, sessionsDb } from '@/modules/database/index.js';
 import { sendDesktopNotification as sendDesktopNotificationToClients } from '@/modules/notifications/services/desktop-notification-clients.service.js';
 import { webhookNotificationsService } from '@/modules/notifications/services/webhook-notifications.service.js';
+import { readNtfyConfig, sendNtfyNotification } from '@/modules/notifications/services/ntfy-notifications.service.js';
 
 const KIND_TO_PREF_KEY = {
   action_required: 'actionRequired',
@@ -233,6 +234,13 @@ const notificationChannels = [
     // on the event id, so every run is sent.
     bypassesDedupe: true,
     send: ({ userId, event }) => webhookNotificationsService.sendForEvent({ userId, event })
+  },
+  {
+    id: 'ntfy',
+    // Gated by server configuration, for the same reason as the webhook channel:
+    // the Settings client rewrites preferences.channels with only its known keys.
+    isEnabled: () => Boolean(readNtfyConfig()),
+    send: ({ payload }) => sendNtfyNotification(readNtfyConfig(), payload)
   }
 ];
 
