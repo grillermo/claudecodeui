@@ -1317,7 +1317,7 @@ export function useChatComposerState({
   // inputValueRef synchronously so handleSubmit reads the new text, not the stale state.
   const handleVoiceTranscript = useCallback((text: string, send?: boolean) => {
     const base = inputValueRef.current.trim();
-    const next = base ? `${base} ${text}` : text;
+    const next = !text ? base : base ? `${base} ${text}` : text;
     setInput(next);
     inputValueRef.current = next;
     if (send) handleSubmitRef.current?.(createFakeSubmitEvent());

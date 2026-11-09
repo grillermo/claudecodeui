@@ -14,6 +14,7 @@ import { PaperclipIcon, MessageSquareIcon, XIcon, Loader2, ArrowUpIcon, PencilIc
 
 import { useVoiceInput } from '@/modules/chat/hooks/useVoiceInput';
 import { useVoiceAvailable } from '@/modules/chat/hooks/useVoiceAvailable';
+import { isNativeWrapper, registerNativeDictation } from '@/shared/native/nativeBridge';
 import { MCP_ELICITATION_TOOL_NAME } from '@/shared/constants';
 import type { BackgroundSendChoice, BackgroundSendPrompt, QueuedDraft, ScheduledMessage, SlashCommand,SessionActivity,PendingPermissionRequest,PermissionMode,ProviderModelOption } from '@/shared/types';
 import {
@@ -250,6 +251,10 @@ export default function ChatComposer({
     onVoiceTranscript ?? noopTranscript,
     handleVoiceError,
   );
+  useEffect(() => {
+    if (!onVoiceTranscript) return undefined;
+    return registerNativeDictation(onVoiceTranscript);
+  }, [onVoiceTranscript]);
   const isRecording = voiceState === 'recording';
   const isTranscribing = voiceState === 'transcribing';
 
@@ -459,7 +464,7 @@ export default function ChatComposer({
               <PaperclipIcon />
             </PromptInputButton>
 
-            {onVoiceTranscript && voiceAvailable && (
+            {onVoiceTranscript && voiceAvailable && !isNativeWrapper() && (
               <VoiceInputButton state={voiceState} onToggle={voiceToggle} errorMsg={voiceError} />
             )}
 
