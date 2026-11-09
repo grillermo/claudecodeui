@@ -12,6 +12,8 @@ A native iOS app that wraps this web app, so that:
 
 - Tabs.
 - Offline chat data. Chats still need the server.
+- Keeping unsent text across closing or backgrounding the app. The user wants what they typed, for
+  example to start a new conversation, to be there on reopening. That is a goal for a later plan.
 - App Store or TestFlight distribution.
 - Replacing the web app's behaviour in Safari or on desktop.
 
@@ -23,6 +25,8 @@ Made by the user:
   with navigation already built.
 - Dictation has "the same UX" as vvterm and "talks directly to my mema server in the PC". Fonos is
   not used. Rationale: one dictation experience across the user's apps.
+- Dictation audio is uploaded as m4a, as Fonos does. There is no Apple Speech fallback.
+- A failed transcription keeps the recording in permanent storage, and a red bar offers retry.
 - ntfy replaces Web Push, which does not work in a WKWebView.
 - No tabs for now. A single-app wrapper does not need them.
 - New web builds download in the background, then a tap applies them. A chat is never reloaded
@@ -34,8 +38,6 @@ Defaults proposed by Claude, awaiting confirmation in this review:
 
 - **Cache architecture:** approach A below, native files served from a custom scheme.
 - **Naming:** repo `~/c/third-parties/cloudcli-ios`, app name `CloudCLI`, scheme `cloudcli`.
-- **Mema client:** written fresh against mema's API, not copied from vvterm. vvterm is GPLv3 and
-  Telescopure is MIT, so copying would make the combined app GPL if it were ever distributed.
 
 ## Facts checked
 
@@ -49,8 +51,11 @@ Defaults proposed by Claude, awaiting confirmation in this review:
   `useWebPush.ts:30`).
 - Web Push is sent from `notification-orchestrator.service.js:181`.
 - vvterm's mema client posts a 16 kHz mono WAV to `<base>/v1/transcribe` as multipart, with a
-  Keychain bearer token. It probes first, retries 503 responses that carry `Retry-After`, and falls
-  back to Apple Speech on failure.
+  Keychain bearer token. It probes first and retries 503 responses that carry `Retry-After`.
+- Fonos records 16 kHz audio and encodes it as AAC at 48 kbps in an m4a container
+  (`AudioCaptureService.swift:54`, `AudioCaptureWAVCodec.swift:125-139`), uploaded as `audio/mp4`.
+- Mema's `/v1/transcribe` takes an uploaded file and converts it with ffmpeg (`server/app.py:185-231`).
+- The web app's server reads `VOICE_API_BASE_URL` and `VOICE_API_KEY` (`voice.module.ts:16-17`).
 - Telescopure creates its web view in one place, `WebView(configuration: .forTelescopure)` in
   `BrowserView.swift`, and needs iOS 18+.
 - Telescopure's README asks for Xcode 27.1+. The macmini has Xcode 26.3 on macOS 15.7.3, and
@@ -107,11 +112,25 @@ The web app is otherwise unaware of the wrapper. The user signs in once under th
 A native floating control follows vvterm's states: voice, then stop or cancel, then return, then
 idle. The keyboard stays open while it is used.
 
-- Records 16 kHz mono audio and posts a WAV to mema's `/v1/transcribe`, with `cleanup_mode=raw`.
+- Records audio with Fonos's settings: 16 kHz mono, AAC at 48 kbps, m4a. Posts it to mema's
+  `/v1/transcribe` as `audio/mp4`, with `cleanup_mode=raw`.
+- Writes each recording to permanent app storage before uploading, and deletes it only after mema
+  returns the text.
 - Probes first, so an absent server is told apart from a slow transcription, and retries busy
   responses up to twice.
-- Falls back to Apple Speech when mema fails, and says so.
-- The mema URL and bearer token are set in Settings. The token is kept in the Keychain.
+- If mema returns an error or cannot be reached, a red bar appears at the top of the app with a
+  "Retry and copy" button. It stays until the recording is transcribed or dismissed. A successful
+  retry copies the text to the clipboard for the user to paste manually, and removes the recording.
+- The mema URL and bearer token are set in Settings. The token is kept in the Keychain. A trailing
+  `/v1` on the URL is ignored, because `VOICE_API_BASE_URL` may carry one.
+
+Moving the settings from `.env`: Claude cannot touch `.env` files, so the user does this step. On
+the macmini, run the command below. Then, on the phone, tap "Paste from clipboard" in Settings,
+which fills both fields from those two lines (Universal Clipboard carries them across).
+
+```bash
+grep -E '^VOICE_API_(BASE_URL|KEY)=' ~/c/third-parties/claudecodeui/.env | pbcopy
+```
 
 The web app gains a small bridge: `window.__nativeDictation` exposes insert-into-composer and send.
 Return sends through it. The composer's own mic button is hidden when the wrapper is detected.
@@ -145,14 +164,15 @@ choose between installing Xcode on immunemac and rebasing on FocusKiosk.
 | Download or hash failure | Discard the partial build and retry at the next check |
 | New build fails to load | Roll back to the previous build and show why |
 | Server unreachable | The web app shows its existing connection error |
-| Mema unreachable or busy | Apple Speech fallback, with a notice |
+| Mema unreachable or returns an error | Keep the recording and show the red "Retry and copy" bar |
+| App closed with a failed recording | The red bar returns on next launch |
 | Microphone permission denied | The control explains and links to Settings |
 | Web process killed by iOS | Reload the current build |
 
 ## Testing
 
-- Unit tests: manifest diffing, hash verification, atomic switching, rollback, URL rewriting and the
-  mema client's retry behaviour.
+- Unit tests: manifest diffing, hash verification, atomic switching, rollback, URL rewriting, parsing the
+  pasted settings, and keeping and retrying failed recordings.
 - Web repo tests: manifest generation, cache headers, the dictation bridge and the ntfy channel.
 - On the phone: airplane-mode launch, applying a new build mid-session, a build that fails to load,
-  dictation through mema and through the fallback, and tapping an ntfy notification.
+  dictation through mema, a failed upload retried from the red bar, and tapping an ntfy notification.
