@@ -148,8 +148,8 @@ app with or without the wrapper.
 
 ### 9. Fork and deploy
 
-Fork into `~/c/third-parties/cloudcli-ios`. Remove bookmarks, search-engine settings, the share
-extension and default-browser support. Keep navigation, pull to refresh and zoom. The start page is
+Fork into `~/c/third-parties/cloudcli-ios`. Remove bookmarks, search-engine settings and
+default-browser support. Keep navigation, pull to refresh and zoom. The start page is
 the current build. Run `ios-ota-deploy` once the app builds.
 
 The first implementation task is proving the fork builds on Xcode 26.3. If it does not, stop and
