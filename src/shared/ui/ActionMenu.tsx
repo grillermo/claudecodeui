@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Loader2, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, Loader2, type LucideIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
 import { Button } from '@/shared/ui/Button';
@@ -13,6 +13,11 @@ export type ActionMenuItem = {
   label: string;
   description?: string;
   icon?: LucideIcon;
+  /** Replaces `icon` for an icon that is not a Lucide component, such as a plugin's own. */
+  iconElement?: React.ReactNode;
+  /** Marks the item as the current choice when the menu switches between views. */
+  isSelected?: boolean;
+  testId?: string;
   onSelect: () => void;
   disabled?: boolean;
   loading?: boolean;
@@ -31,6 +36,7 @@ type ActionMenuProps = {
   size?: ButtonSize;
   className?: string;
   triggerClassName?: string;
+  triggerTestId?: string;
   menuClassName?: string;
   disabled?: boolean;
   iconOnly?: boolean;
@@ -39,7 +45,7 @@ type ActionMenuProps = {
   onOpenChange?: (open: boolean) => void;
 };
 
-/** Used by the mcp and sidebar modules for the "…" overflow menu on a server or session row. */
+/** Used by the mcp, sidebar, chat and project-workspace modules for overflow menus and the workspace's tab switcher. */
 export function ActionMenu({
   label,
   items,
@@ -50,6 +56,7 @@ export function ActionMenu({
   size = 'sm',
   className,
   triggerClassName,
+  triggerTestId,
   menuClassName,
   disabled,
   iconOnly = false,
@@ -203,6 +210,8 @@ export function ActionMenu({
             <button
               type="button"
               role="menuitem"
+              data-testid={item.testId}
+              aria-current={item.isSelected ? 'true' : undefined}
               disabled={item.disabled || item.loading}
               onClick={() => runItem(item)}
               className={cn(
@@ -218,7 +227,7 @@ export function ActionMenu({
               {item.loading ? (
                 <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 animate-spin" />
               ) : (
-                Icon && <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                item.iconElement ?? (Icon && <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />)
               )}
               <span className="min-w-0 flex-1">
                 <span className="block font-medium leading-5">{item.label}</span>
@@ -228,6 +237,7 @@ export function ActionMenu({
                   </span>
                 )}
               </span>
+              {item.isSelected && <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />}
             </button>
           </React.Fragment>
         );
@@ -243,6 +253,7 @@ export function ActionMenu({
         variant={variant}
         size={size}
         className={triggerClassName}
+        data-testid={triggerTestId}
         disabled={disabled}
         aria-label={ariaLabel || label}
         aria-haspopup="menu"

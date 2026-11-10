@@ -104,12 +104,6 @@ beforeEach(() => {
   vi.useFakeTimers();
   FakeWebSocket.instances = [];
   vi.stubGlobal('WebSocket', FakeWebSocket);
-  vi.stubGlobal('ResizeObserver', class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  });
-  Element.prototype.scrollIntoView = () => undefined;
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
