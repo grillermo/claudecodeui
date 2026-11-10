@@ -103,6 +103,8 @@
     "loading": "Cargando CloudCLI",
     "settingUpWorkspace": "Preparando tu espacio de trabajo...",
     "chooseProject": "Elige tu proyecto",
+    "recentProjects": "Proyectos recientes",
+    "newSessionInProject": "Iniciar una nueva sesión en {{name}}",
     "selectProjectDescription": "Selecciona un proyecto en la barra lateral para empezar a programar con Claude. Cada proyecto contiene tus sesiones de chat e historial de archivos.",
     "tip": "Consejo",
     "createProjectMobile": "Toca el botón de menú de arriba para acceder a los proyectos",

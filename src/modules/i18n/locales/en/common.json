@@ -91,6 +91,8 @@
     "loading": "Loading CloudCLI",
     "settingUpWorkspace": "Setting up your workspace...",
     "chooseProject": "Choose Your Project",
+    "recentProjects": "Recent projects",
+    "newSessionInProject": "Start a new session in {{name}}",
     "selectProjectDescription": "Select a project from the sidebar to start coding with Claude. Each project contains your chat sessions and file history.",
     "tip": "Tip",
     "createProjectMobile": "Tap the menu button above to access projects",

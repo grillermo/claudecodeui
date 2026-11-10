@@ -1,8 +1,10 @@
 import { memo, useCallback } from 'react';
 
 import { useProjectMainState } from '@/modules/project-workspace/context/ProjectsStateContext';
-import type { SessionEstablishedContext, SessionNavigationOptions,ProjectWorkspaceShellProps } from '@/shared/types';
+import type { Project, SessionEstablishedContext, SessionNavigationOptions,ProjectWorkspaceShellProps } from '@/shared/types';
 import WorkspaceMain from '@/modules/project-workspace/WorkspaceMain';
+
+const NO_PROJECTS: Project[] = [];
 
 /** Rendered by ProjectWorkspaceShell to bind this module's project state to WorkspaceMain. */
 function ProjectMainRegion({
@@ -25,6 +27,8 @@ function ProjectMainRegion({
     handleProjectSelect,
     refreshProjectsSilently,
     renameSession,
+    projects,
+    handleNewSession,
   } = useProjectMainState();
 
   const handleOpenSidebar = useCallback(() => {
@@ -68,6 +72,10 @@ function ProjectMainRegion({
       onProjectSelect={handleProjectSelect}
       onProjectsRefresh={handleProjectsRefresh}
       onRenameSession={renameSession}
+      // Only the welcome screen needs the list; a stable empty array keeps the
+      // memoized workspace from re-rendering on every project update.
+      projects={selectedProject ? NO_PROJECTS : projects}
+      onNewSession={handleNewSession}
     />
   );
 }

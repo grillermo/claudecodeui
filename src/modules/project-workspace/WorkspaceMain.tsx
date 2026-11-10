@@ -37,6 +37,10 @@ type WorkspaceMainProps = {
   onProjectsRefresh: () => void;
   /** Persists a new title for a session; resolves false when the backend refuses it. Used by the header's inline rename. */
   onRenameSession: (sessionId: string, summary: string) => Promise<boolean>;
+  /** Every known project; the welcome screen lists the recently opened ones. */
+  projects: Project[];
+  /** Selects a project and starts a new chat in it. Used by the welcome screen's recent list. */
+  onNewSession: (project: Project) => void;
 };
 
 /** Rendered by ProjectMainRegion to show the selected project's active tab: chat, files, shell, git, tasks, browser or a plugin. */
@@ -58,6 +62,8 @@ function WorkspaceMain({
   onProjectSelect,
   onProjectsRefresh,
   onRenameSession,
+  projects,
+  onNewSession,
 }: WorkspaceMainProps) {
   const preferences = useUiPreferences();
   const { showRawParameters, showThinking, sendByCtrlEnter } = preferences;
@@ -138,7 +144,15 @@ function WorkspaceMain({
   }
 
   if (!selectedProject) {
-    return <WorkspaceStateView mode="empty" isMobile={isMobile} onMenuClick={onMenuClick} />;
+    return (
+      <WorkspaceStateView
+        mode="empty"
+        isMobile={isMobile}
+        onMenuClick={onMenuClick}
+        projects={projects}
+        onNewSession={onNewSession}
+      />
+    );
   }
 
   return (

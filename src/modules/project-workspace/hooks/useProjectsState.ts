@@ -9,6 +9,7 @@ import type { ServerEvent,
   Project,
   ProjectSession,IsSessionProcessing } from '@/shared/types';
 import { mergeProjectSelectionMetadata } from '@/modules/project-workspace/utils/projectSelectionMetadata';
+import { recordRecentProject } from '@/modules/project-workspace/utils/recentProjects';
 import { readSelectedProvider } from '@/shared/selectedProvider';
 
 type UseProjectsStateArgs = {
@@ -709,6 +710,13 @@ export function useProjectsState({
 
     void hydrateProjectTaskMaster(selectedProject.projectId);
   }, [hydrateProjectTaskMaster, selectedProject?.projectId]);
+
+  // Remembers which projects the user opens, for the welcome screen's recent list.
+  useEffect(() => {
+    if (selectedProject?.projectId) {
+      recordRecentProject(selectedProject.projectId);
+    }
+  }, [selectedProject?.projectId]);
 
   // Auto-select the project when there is only one, so the user lands on the new session page
   useEffect(() => {
