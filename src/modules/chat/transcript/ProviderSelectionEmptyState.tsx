@@ -184,13 +184,13 @@ export default function ProviderSelectionEmptyState({
 
   if (!selectedSession && !currentSessionId) {
     return (
-      <div className="flex h-full items-center justify-center px-4">
+      <div data-testid="provider-selection" className="flex h-full items-center justify-center px-4">
         <div className="w-full max-w-[34.25rem]">
           <div className="mb-8 text-center">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            <h2 data-testid="provider-selection-title" className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               {t("providerSelection.title")}
             </h2>
-            <p className="mt-1 text-[13px] text-muted-foreground">
+            <p data-testid="provider-selection-description" className="mt-1 text-[13px] text-muted-foreground">
               {t("providerSelection.description")}
             </p>
           </div>
@@ -200,6 +200,7 @@ export default function ProviderSelectionEmptyState({
               <Card
                 className="group mx-auto max-w-xs cursor-pointer border-border/60 transition-all duration-150 hover:border-border hover:shadow-md active:scale-[0.99]"
                 role="button"
+                data-testid="provider-model-picker-trigger"
                 tabIndex={0}
               >
                 <div className="flex items-center gap-2 p-3">
@@ -209,11 +210,11 @@ export default function ProviderSelectionEmptyState({
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1">
-                      <span className="text-xs font-semibold text-foreground">
+                      <span data-testid="provider-model-picker-provider" className="text-xs font-semibold text-foreground">
                         {getProviderDisplayName(provider)}
                       </span>
                       <span className="text-xs text-muted-foreground">·</span>
-                      <span className="truncate text-xs text-foreground">
+                      <span data-testid="provider-model-picker-model" className="truncate text-xs text-foreground">
                         {currentModelLabel}
                       </span>
                     </div>
@@ -228,7 +229,7 @@ export default function ProviderSelectionEmptyState({
               </Card>
             </DialogTrigger>
 
-            <DialogContent className="max-w-md overflow-hidden p-0">
+            <DialogContent data-testid="provider-model-picker-dialog" className="max-w-md overflow-hidden p-0">
               <DialogTitle>Model Selector</DialogTitle>
               <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-4 py-3">
                 <div>
@@ -252,6 +253,7 @@ export default function ProviderSelectionEmptyState({
                   variant="ghost"
                   size="sm"
                   onClick={openModelLibrary}
+                  data-testid="provider-model-picker-add-model"
                   className="h-8 shrink-0 rounded-lg px-2.5 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -262,6 +264,7 @@ export default function ProviderSelectionEmptyState({
                 <CommandInput
                   value={modelSearch}
                   onValueChange={setModelSearch}
+                  data-testid="provider-model-picker-search"
                   placeholder={t("providerSelection.searchModels", {
                     defaultValue: "Search models...",
                   })}
@@ -298,7 +301,7 @@ export default function ProviderSelectionEmptyState({
               }
             }}
           >
-            <DialogContent className="flex h-[min(90dvh,46rem)] w-[calc(100vw-1rem)] max-w-4xl flex-col overflow-hidden rounded-3xl p-4 sm:p-5">
+            <DialogContent data-testid="provider-model-library-dialog" className="flex h-[min(90dvh,46rem)] w-[calc(100vw-1rem)] max-w-4xl flex-col overflow-hidden rounded-3xl p-4 sm:p-5">
               <DialogTitle>
                 {t("providerSelection.manageModels", {
                   defaultValue: "Manage models",
@@ -313,7 +316,7 @@ export default function ProviderSelectionEmptyState({
             </DialogContent>
           </Dialog>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground/70">
+          <p data-testid="provider-selection-ready-prompt" className="mt-4 text-center text-sm text-muted-foreground/70">
             {
               {
                 claude: t("providerSelection.readyPrompt.claude", {
@@ -333,7 +336,7 @@ export default function ProviderSelectionEmptyState({
             }
           </p>
 
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60">
+          <p data-testid="provider-selection-search-hint" className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60">
             <Trans
               ns="chat"
               i18nKey="providerSelection.pressToSearch"
@@ -347,7 +350,7 @@ export default function ProviderSelectionEmptyState({
           </p>
 
           {provider && tasksEnabled && isTaskMasterInstalled && (
-            <div className="mt-5">
+            <div data-testid="provider-selection-next-task" className="mt-5">
               <NextTaskBanner
                 onStartTask={() => setInput(nextTaskPrompt)}
                 onShowAllTasks={onShowAllTasks}
@@ -371,7 +374,7 @@ export default function ProviderSelectionEmptyState({
           </p>
 
           {tasksEnabled && isTaskMasterInstalled && (
-            <div className="mt-5">
+            <div data-testid="provider-selection-next-task" className="mt-5">
               <NextTaskBanner
                 onStartTask={() => setInput(nextTaskPrompt)}
                 onShowAllTasks={onShowAllTasks}

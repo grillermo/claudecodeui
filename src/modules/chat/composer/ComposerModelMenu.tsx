@@ -92,6 +92,7 @@ function ComposerModelMenu({
         aria-expanded={isOpen}
         aria-label={ariaLabel}
         title={ariaLabel}
+        data-testid="chat-composer-model-button"
       >
         <span className="truncate">{triggerLabel}</span>
         {hasModelSection && hasEffortSection && effort !== DEFAULT_EFFORT_VALUE && (

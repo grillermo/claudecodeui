@@ -96,7 +96,7 @@ export default function WorkspaceHeader({
   };
 
   return (
-    <header className="pwa-header-safe flex-shrink-0 border-b border-border/60 bg-background/95 px-3 py-1.5 backdrop-blur-sm sm:px-4 sm:py-2">
+    <header data-testid="workspace-header" className="pwa-header-safe flex-shrink-0 border-b border-border/60 bg-background/95 px-3 py-1.5 backdrop-blur-sm sm:px-4 sm:py-2">
       <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
         <div className="flex min-w-0 items-center gap-2 sm:max-w-[min(34%,24rem)] sm:flex-[1_1_18rem]">
           {isMobile && <MobileMenuButton onMenuClick={onMenuClick} />}
@@ -138,6 +138,7 @@ export default function WorkspaceHeader({
               <button
                 type="button"
                 onClick={() => scrollTabs(-1)}
+                data-testid="workspace-tabs-scroll-left"
                 aria-label={t('navigation.scrollTabsLeft', { defaultValue: 'Scroll tabs left' })}
                 className="absolute left-1 top-1/2 z-20 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-sm outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/60 sm:flex"
               >
@@ -148,6 +149,7 @@ export default function WorkspaceHeader({
               <button
                 type="button"
                 onClick={() => scrollTabs(1)}
+                data-testid="workspace-tabs-scroll-right"
                 aria-label={t('navigation.scrollTabsRight', { defaultValue: 'Scroll tabs right' })}
                 className="absolute right-1 top-1/2 z-20 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-sm outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/60 sm:flex"
               >

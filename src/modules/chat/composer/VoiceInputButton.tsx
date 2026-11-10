@@ -34,6 +34,7 @@ export default function VoiceInputButton({ state, onToggle, errorMsg }: Props) {
         </span>
       )}
       <PromptInputButton
+        data-testid="chat-composer-voice-button"
         tooltip={{ content: state === 'recording' ? t('voice.stopRecording') : t('voice.input') }}
         onClick={(e: { preventDefault: () => void }) => {
           e.preventDefault();

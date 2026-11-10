@@ -286,7 +286,7 @@ export default function ChatComposer({
       : t('input.send');
 
   return (
-    <div className="chat-composer-shell relative flex-shrink-0 px-2 pb-2 pt-0 sm:px-4 sm:pb-4 md:px-4 md:pb-6">
+    <div data-testid="chat-composer" className="chat-composer-shell relative flex-shrink-0 px-2 pb-2 pt-0 sm:px-4 sm:pb-4 md:px-4 md:pb-6">
       {!hasPendingPermissions && (
         <div className="pointer-events-none absolute bottom-full left-1/2 z-10 w-[calc(100%-1rem)] max-w-[54.25rem] -translate-x-1/2 translate-y-px bg-transparent sm:w-[calc(100%-2rem)]">
           <ActivityIndicator activity={activity} onAbort={onAbortSession} isInputFocused={isInputFocused} />
@@ -390,6 +390,7 @@ export default function ChatComposer({
         <PromptInput
           onSubmit={onSubmit as (event: FormEvent<HTMLFormElement>) => void}
           status={isLoading ? 'streaming' : 'ready'}
+          data-testid="chat-composer-form"
           className={[
             isTextareaExpanded ? 'chat-input-expanded' : '',
             hasActivityIndicator ? 'rounded-t-none' : '',
@@ -429,7 +430,7 @@ export default function ChatComposer({
             </PromptInputHeader>
           )}
 
-          <input {...getInputProps()} />
+          <input {...getInputProps()} data-testid="chat-composer-file-input" />
 
           <PromptInputBody>
             <div ref={inputHighlightRef} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
@@ -450,6 +451,7 @@ export default function ChatComposer({
               onFocus={() => onInputFocusChange?.(true)}
               onBlur={() => onInputFocusChange?.(false)}
               onInput={onTextareaInput}
+              data-testid="chat-composer-textarea"
               placeholder={placeholder}
             />
         </PromptInputBody>
@@ -460,6 +462,7 @@ export default function ChatComposer({
               tooltip={{ content: t('input.attachFiles') }}
               onClick={openAttachmentPicker}
               aria-label={t('input.attachFiles')}
+              data-testid="chat-composer-attach-button"
             >
               <PaperclipIcon />
             </PromptInputButton>
@@ -473,11 +476,13 @@ export default function ChatComposer({
             <PromptInputButton
               tooltip={{ content: t('input.showAllCommands') }}
               onClick={onToggleCommandMenu}
+              data-testid="chat-composer-commands-button"
               className="relative"
             >
               <MessageSquareIcon />
               {slashCommandsCount > 0 && (
                 <span
+                  data-testid="chat-composer-commands-count"
                   className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
                 >
                   {slashCommandsCount}
@@ -489,6 +494,7 @@ export default function ChatComposer({
               <PromptInputButton
                 tooltip={{ content: t('input.clearInput', { defaultValue: 'Clear input' }) }}
                 onClick={onClearInput}
+                data-testid="chat-composer-clear-button"
                 className="hidden sm:flex"
               >
                 <XIcon />
@@ -549,6 +555,7 @@ export default function ChatComposer({
               }
               aria-label={submitAriaLabel}
               title={submitAriaLabel}
+              data-testid="chat-composer-submit-button"
               className="h-10 w-10 sm:h-10 sm:w-10"
             >
               {isTranscribing ? (
@@ -560,6 +567,7 @@ export default function ChatComposer({
           </div>
 
           <div
+            data-testid="chat-composer-submit-hint"
             className={`order-last hidden basis-full px-2 text-center text-xs leading-4 text-muted-foreground/50 transition-opacity duration-200 lg:block ${
               input.trim() && !canQueueDraft ? 'opacity-0' : 'opacity-100'
             }`}

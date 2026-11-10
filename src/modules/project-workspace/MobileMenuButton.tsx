@@ -21,6 +21,7 @@ export default function MobileMenuButton({ onMenuClick, compact = false }: Mobil
       onTouchEnd={handleMobileMenuTouchEnd}
       className={buttonClasses}
       aria-label={t('misc.openMenu')}
+      data-testid="workspace-menu-button"
     >
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

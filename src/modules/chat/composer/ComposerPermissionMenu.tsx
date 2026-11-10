@@ -136,6 +136,7 @@ function ComposerPermissionMenu({
         className={`flex h-8 min-w-8 max-w-40 shrink-0 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-colors sm:max-w-48 ${isNameShown ? 'px-2' : 'w-8'} ${activeAppearance.trigger}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        data-testid="chat-composer-permission-button"
         // The mode name leads the accessible name, so what a screen reader
         // announces starts with what the button shows.
         aria-label={t('composer.permissionTriggerLabel', {

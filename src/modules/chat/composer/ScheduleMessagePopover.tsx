@@ -66,6 +66,7 @@ export function ScheduleMessagePopover({ disabled, onSchedule }: ScheduleMessage
         ref={triggerRef}
         type="button"
         disabled={disabled}
+        data-testid="chat-composer-schedule-button"
         onClick={() => {
           updateAnchor();
           setIsOpen((current) => !current);

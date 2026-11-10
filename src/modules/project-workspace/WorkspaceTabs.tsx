@@ -102,6 +102,7 @@ export default function WorkspaceTabs({
   return (
     <PillBar
       role="tablist"
+      data-testid="workspace-tabs"
       aria-label={t('tabs.views', { defaultValue: 'Workspace views' })}
       className="min-w-max border border-border/40 bg-muted/50 shadow-inner shadow-black/[0.025] dark:shadow-black/10"
     >
@@ -117,6 +118,7 @@ export default function WorkspaceTabs({
             <Tooltip content={displayLabel} position="bottom">
               <Pill
                 role="tab"
+                data-testid={`workspace-tab-${tab.id.replace(':', '-')}`}
                 aria-label={displayLabel}
                 aria-selected={isActive}
                 tabIndex={isActive ? 0 : -1}

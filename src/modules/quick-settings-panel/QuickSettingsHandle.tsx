@@ -62,6 +62,7 @@ export default function QuickSettingsHandle({
         WebkitUserSelect: 'none',
       }}
       aria-label={ariaLabel}
+      data-testid="quick-settings-handle"
       title={title}
     >
       {isDragging ? (

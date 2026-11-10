@@ -54,6 +54,7 @@ function ComposerAccountMenu() {
     <select
       aria-label={t('composer.claudeAccount', { defaultValue: 'Claude account' })}
       value={selected}
+      data-testid="chat-composer-account-select"
       onChange={(event) => handleChange(event.target.value)}
       className="h-7 max-w-44 truncate rounded-md border border-border bg-transparent px-1.5 text-xs text-muted-foreground hover:bg-muted"
     >
