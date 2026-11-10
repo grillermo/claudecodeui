@@ -571,7 +571,6 @@ export function useChatComposerState({
     selectedCommandIndex,
     resetCommandMenuState,
     handleCommandSelect,
-    handleToggleCommandMenu,
     handleCommandInputChange,
     handleCommandMenuKeyDown,
   } = useSlashCommands({
@@ -1600,7 +1599,6 @@ export function useChatComposerState({
     selectedCommandIndex,
     resetCommandMenuState,
     handleCommandSelect,
-    handleToggleCommandMenu,
     showFileDropdown,
     filteredFiles: filteredFiles as MentionableFile[],
     selectedFileIndex,

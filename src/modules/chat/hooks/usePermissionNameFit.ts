@@ -23,36 +23,26 @@ type PermissionNameFitInput = {
   room: number;
   /** Width of the footer's left-hand tools. */
   toolsWidth: number;
-  /** Width of the right-hand controls (schedule, model, permission, send) with the trigger as an icon. */
+  /** Width of the right-hand controls (model, permission, token usage, attach, send) with the trigger as an icon. */
   controlsWidth: number;
   /** How much wider the trigger is with the name shown. */
   nameWidth: number;
-  /** Whether the name may move the controls onto a row of their own. */
-  mayWrap: boolean;
   /** Room to spare on top of the name, for a name that is not shown yet. */
   margin: number;
 };
 
 /**
- * Whether the permission trigger has room for the mode's name. Never when the
- * name would push the controls past the composer's edge, where the send button
- * is. Unless the name may wrap, only when the whole toolbar, name included,
- * still fits on one row, so naming the mode never moves the model menu and the
- * send button onto a second row that the icon did not need.
+ * Whether the permission trigger has room for the mode's name: only when the
+ * whole toolbar, name included, still fits on the footer's single row.
  */
 function fitsPermissionName({
   room,
   toolsWidth,
   controlsWidth,
   nameWidth,
-  mayWrap,
   margin,
 }: PermissionNameFitInput): boolean {
-  const namedControlsWidth = controlsWidth + nameWidth;
-  if (namedControlsWidth > room + FIT_EPSILON) {
-    return false;
-  }
-  return mayWrap || toolsWidth + namedControlsWidth + margin <= room + FIT_EPSILON;
+  return toolsWidth + controlsWidth + nameWidth + margin <= room + FIT_EPSILON;
 }
 
 /** The composer footer around the trigger, its left-hand tools and the group that holds the trigger. */
@@ -80,7 +70,6 @@ type NameFit = { name: string; isShown: boolean };
 export function usePermissionNameFit(
   triggerRef: RefObject<HTMLButtonElement | null>,
   name: string | null,
-  mayWrap: boolean,
 ): boolean {
   // The trigger's width with each name shown. A hidden name is not in the DOM
   // to measure, so it keeps the width it had when it was last shown.
@@ -118,11 +107,10 @@ export function usePermissionNameFit(
       toolsWidth: tools.getBoundingClientRect().width,
       controlsWidth: controls.getBoundingClientRect().width - triggerWidth + ICON_ONLY_WIDTH,
       nameWidth: namedWidth - ICON_ONLY_WIDTH,
-      mayWrap,
       margin: isDecided && isShown ? 0 : SHOW_MARGIN,
     });
     setFit((current) => (current?.name === name && current.isShown === next ? current : { name, isShown: next }));
-  }, [triggerRef, name, mayWrap, isDecided, isShown]);
+  }, [triggerRef, name, isDecided, isShown]);
 
   useLayoutEffect(() => {
     measure();

@@ -103,14 +103,10 @@ function ComposerPermissionMenu({
   const modeLabel = (mode: PermissionMode) =>
     t(`codex.modes.${mode}`, { defaultValue: getAppearance(mode).label || mode });
   const activeModeLabel = modeLabel(permissionMode);
-  // The name is shown only where the composer has room for it, so it never
-  // pushes the model menu and the send button onto a second row. Plan mode,
-  // the one that changes nothing, keeps its name wherever it fits inside the
-  // composer, even when that gives the controls a row of their own.
+  // The name is shown only where the composer's single footer row has room for it.
   const isNameShown = usePermissionNameFit(
     triggerRef,
     permissionModes.length > 0 ? activeModeLabel : null,
-    permissionMode === 'plan',
   );
 
   if (permissionModes.length === 0) {

@@ -190,24 +190,14 @@ test('the mode is named where the composer has room, and only the icon is left w
   assert.equal(trigger.textContent, 'Default Mode');
 });
 
-test('plan mode keeps its name wherever it fits inside the composer', () => {
-  // Docked at 1366px (416px): the controls already need a row of their own,
-  // and with the name they still fit inside it. Default mode stays an icon.
+test('plan mode gets no exception: the footer stays on one row', () => {
+  // Docked at 1366px (416px) the name fits beside the controls but not beside
+  // the tools as well, so it would need a second row; Plan Mode stays an icon
+  // like every other mode.
   layOutComposer(416);
   const plan = renderInFooter('plan');
-  assert.equal(plan.getByRole('button').textContent, 'Plan Mode');
-  plan.unmount();
-
-  const other = renderInFooter('default');
-  assert.equal(other.getByRole('button').textContent, '');
-  other.unmount();
-
-  // Docked at 1280px (330px) even Plan Mode's name would push the send button
-  // out, so plan mode falls back to the icon too.
-  layOutComposer(330);
-  const narrow = renderInFooter('plan');
-  assert.equal(narrow.getByRole('button').textContent, '');
-  assert.ok(narrow.getByRole('button', { name: /^Plan Mode: / }));
+  assert.equal(plan.getByRole('button').textContent, '');
+  assert.ok(plan.getByRole('button', { name: /^Plan Mode: / }));
 });
 
 test('typing the first character neither takes the name away nor brings it in', () => {

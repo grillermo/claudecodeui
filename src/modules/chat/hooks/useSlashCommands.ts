@@ -243,19 +243,6 @@ export function useSlashCommands({
     [selectedProject, trackCommandUsage, insertCommandIntoInput, executeNonSkillCommand],
   );
 
-  const handleToggleCommandMenu = useCallback(() => {
-    const isOpening = !showCommandMenu;
-    setShowCommandMenu(isOpening);
-    setCommandQuery('');
-    setSelectedCommandIndex(-1);
-
-    if (isOpening) {
-      setFilteredCommands(slashCommands);
-    }
-
-    textareaRef.current?.focus();
-  }, [showCommandMenu, slashCommands, textareaRef]);
-
   const handleCommandInputChange = useCallback(
     (newValue: string, cursorPos: number) => {
       if (!newValue.trim()) {
@@ -383,7 +370,6 @@ export function useSlashCommands({
     selectedCommandIndex,
     resetCommandMenuState,
     handleCommandSelect,
-    handleToggleCommandMenu,
     handleCommandInputChange,
     handleCommandMenuKeyDown,
   };

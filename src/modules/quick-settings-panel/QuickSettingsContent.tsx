@@ -13,6 +13,7 @@ import { DarkModeToggle } from '@/shared/ui';
 import { LanguageSelector } from '@/modules/i18n';
 import { SETTING_ROW_CLASS } from '@/shared/constants';
 import type { PreferenceToggleKey, QuickSettingsPreferences } from '@/shared/types';
+import QuickSettingsClaudeAccountRow from '@/modules/quick-settings-panel/QuickSettingsClaudeAccountRow';
 import QuickSettingsSection from '@/modules/quick-settings-panel/QuickSettingsSection';
 import QuickSettingsToggleRow from '@/modules/quick-settings-panel/QuickSettingsToggleRow';
 
@@ -100,6 +101,7 @@ export default function QuickSettingsContent({
       </QuickSettingsSection>
 
       <QuickSettingsSection title={t('quickSettings.sections.inputSettings')}>
+        <QuickSettingsClaudeAccountRow />
         {renderToggleRows(inputSettingToggles)}
         <p className="ml-3 text-xs text-muted-foreground">
           {t('quickSettings.sendByCtrlEnterDescription')}

@@ -60,6 +60,9 @@ function ComposerModelMenu({
     [effortOptions],
   );
   const effortLabel = effort === DEFAULT_EFFORT_VALUE ? defaultEffortLabel : effort;
+  // A single letter keeps the trigger narrow; 'max' takes two because every
+  // provider that offers it also offers 'medium'.
+  const effortLetter = effort === 'max' ? 'Mx' : effortLabel.charAt(0).toUpperCase();
 
   const selectedModelOption = useMemo(
     () => modelOptions.find((option) => option.value === model) ?? null,
@@ -73,10 +76,13 @@ function ComposerModelMenu({
     return null;
   }
 
-  const triggerLabel = hasModelSection ? modelLabel : effortLabel;
   const ariaLabel = t('composer.modelMenu', {
     defaultValue: 'Select model and reasoning effort',
   });
+  // The trigger abbreviates the effort, so the tooltip is where its full name is readable.
+  const selectionSummary = [hasModelSection ? modelLabel : null, hasEffortSection ? effortLabel : null]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <>
@@ -87,16 +93,18 @@ function ComposerModelMenu({
           updateAnchor();
           setIsOpen((current) => !current);
         }}
-        className="flex h-8 max-w-20 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:max-w-56"
+        className="flex h-8 min-w-0 max-w-24 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:max-w-56"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
-        title={ariaLabel}
+        title={`${ariaLabel} (${selectionSummary})`}
         data-testid="chat-composer-model-button"
       >
-        <span className="truncate">{triggerLabel}</span>
-        {hasModelSection && hasEffortSection && effort !== DEFAULT_EFFORT_VALUE && (
-          <span className="hidden shrink-0 capitalize text-muted-foreground sm:inline">· {effortLabel}</span>
+        {hasModelSection && <span className="truncate">{modelLabel}</span>}
+        {hasEffortSection && (
+          <span data-testid="chat-composer-effort-letter" className="shrink-0 text-muted-foreground">
+            {hasModelSection ? `· ${effortLetter}` : effortLetter}
+          </span>
         )}
       </button>
 

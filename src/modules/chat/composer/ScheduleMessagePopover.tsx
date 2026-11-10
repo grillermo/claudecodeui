@@ -38,8 +38,9 @@ function toLocalInputValue(date: Date): string {
 }
 
 /**
- * Rendered by chat's ChatComposer beside the send button so the message in the
- * box can be sent later instead of now.
+ * Lets the message in the box be sent later instead of now. Dormant: ChatComposer
+ * no longer renders it, to keep the footer on one row; messages already scheduled
+ * still fire and stay listed by ScheduledMessageList.
  */
 export function ScheduleMessagePopover({ disabled, onSchedule }: ScheduleMessagePopoverProps) {
   const { t } = useTranslation('chat');
