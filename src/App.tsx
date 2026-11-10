@@ -112,7 +112,7 @@ export default function App() {
   const routerBasename = detectRouterBasename();
 
   useEffect(() => {
-    notifyNativeReady();
+    void notifyNativeReady();
   }, []);
 
   return (
