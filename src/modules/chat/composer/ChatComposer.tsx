@@ -255,7 +255,6 @@ export default function ChatComposer({
 
   // Hide the thinking/status bar while any permission request is pending
   const hasPendingPermissions = pendingPermissionRequests.length > 0;
-  const hasActivityIndicator = Boolean(activity && !hasPendingPermissions);
 
   const hasQueuedDraft = Boolean(queuedDraft);
   const canQueueDraft = isLoading && Boolean(input.trim() || attachedFiles.length > 0);
@@ -268,15 +267,15 @@ export default function ChatComposer({
       : t('input.send');
 
   return (
-    <div data-testid="chat-composer" className="chat-composer-shell relative flex-shrink-0 px-2 pb-2 pt-0 sm:px-4 sm:pb-4 md:px-4 md:pb-6">
+    <div data-testid="chat-composer" className="chat-composer-shell relative flex-shrink-0">
       {!hasPendingPermissions && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-10 w-[calc(100%-1rem)] max-w-[54.25rem] -translate-x-1/2 translate-y-px bg-transparent sm:w-[calc(100%-2rem)]">
+        <div className="pointer-events-none absolute bottom-full left-0 right-0 z-10 translate-y-px bg-transparent px-2 sm:px-4">
           <ActivityIndicator activity={activity} onAbort={onAbortSession} isInputFocused={isInputFocused} />
         </div>
       )}
 
       {pendingPermissionRequests.length > 0 && (
-        <div className="mx-auto mb-3 max-w-[54.25rem]">
+        <div className="mx-auto mb-3 max-w-[54.25rem] px-2 sm:px-4">
           <PermissionRequestsBanner
             pendingPermissionRequests={pendingPermissionRequests}
             providerLabel={providerLabel}
@@ -292,7 +291,7 @@ export default function ChatComposer({
       />
 
       {isEditingSentMessage && (
-        <div className="mx-auto mb-2 flex max-w-[54.25rem] items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
+        <div className="mx-2 mb-2 flex max-w-[54.25rem] items-center sm:mx-auto gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
           <PencilIcon className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <span className="min-w-0 flex-1">
             {t('composer.editing.title')}
@@ -327,7 +326,7 @@ export default function ChatComposer({
 
       <MarksTray />
 
-      {!hasQuestionPanel && <div className="relative mx-auto max-w-[54.25rem]">
+      {!hasQuestionPanel && <div className="relative">
         {showFileDropdown && filteredFiles.length > 0 && (
           <div
             ref={fileDropdownRef}
@@ -373,10 +372,7 @@ export default function ChatComposer({
           onSubmit={onSubmit as (event: FormEvent<HTMLFormElement>) => void}
           status={isLoading ? 'streaming' : 'ready'}
           data-testid="chat-composer-form"
-          className={[
-            isTextareaExpanded ? 'chat-input-expanded' : '',
-            hasActivityIndicator ? 'rounded-t-none' : '',
-          ].filter(Boolean).join(' ')}
+          className={isTextareaExpanded ? 'chat-input-expanded' : undefined}
           {...getRootProps()}
         >
           {isDragActive && (
