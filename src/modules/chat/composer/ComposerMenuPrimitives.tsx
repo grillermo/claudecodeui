@@ -29,6 +29,7 @@ export function ComposerMenuSurface({
       className="fixed z-[100] min-w-48 overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl"
       style={{
         right: anchor.right,
+        left: anchor.left,
         bottom: anchor.bottom,
         maxHeight: anchor.maxHeight,
         maxWidth: anchor.maxWidth,

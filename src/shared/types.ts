@@ -791,9 +791,12 @@ export type BackgroundSendPrompt = {
   work: string[];
 };
 
-/** Viewport-relative placement box (right/bottom offsets plus max height and width) computed for a composer popover so the model and permission menus stay inside the window. */
+/** Viewport-relative placement box (a right or left offset, a bottom offset, plus max height and width) computed for a composer popover so the model and permission menus stay inside the window. */
 export type ComposerMenuAnchor = {
-  right: number;
+  /** Set when the menu right-aligns to its trigger and grows leftward. */
+  right?: number;
+  /** Set instead of `right` when the trigger is too close to the left edge to grow leftward. */
+  left?: number;
   bottom: number;
   maxHeight: number;
   maxWidth: number;

@@ -7,13 +7,34 @@ const VIEWPORT_MARGIN = 8;
 const MENU_GAP = 8;
 
 /**
- * Positions a composer popover above its trigger and right-aligned to it.
+ * Places a composer popover above its trigger.
  *
- * Anchoring with `right`/`bottom` rather than `left`/`top` lets the menu grow
- * upward and leftward without measuring itself first, so it never paints in the
- * wrong spot for a frame. The same anchor works on phones because `maxWidth`
- * shrinks the menu instead of letting it run off the left edge.
+ * It right-aligns to the trigger and grows leftward. When the trigger sits too
+ * close to the left edge for that (on a phone the model button is the first
+ * thing in the footer), it left-aligns to the trigger and grows rightward
+ * instead, so the menu never runs off-screen. Anchoring by edge offsets rather
+ * than `top` lets the menu grow upward without measuring itself first.
  */
+export function computeComposerMenuAnchor(
+  rect: Pick<DOMRect, 'left' | 'right' | 'top'>,
+  viewport: { width: number; height: number },
+  preferredWidth: number,
+): ComposerMenuAnchor {
+  const bottom = viewport.height - rect.top + MENU_GAP;
+  const maxHeight = Math.max(160, rect.top - MENU_GAP - VIEWPORT_MARGIN);
+
+  const right = Math.max(VIEWPORT_MARGIN, viewport.width - rect.right);
+  const roomGrowingLeft = viewport.width - right - VIEWPORT_MARGIN;
+  const left = Math.max(VIEWPORT_MARGIN, rect.left);
+  const roomGrowingRight = viewport.width - left - VIEWPORT_MARGIN;
+
+  if (roomGrowingLeft >= preferredWidth || roomGrowingLeft >= roomGrowingRight) {
+    return { right, bottom, maxHeight, maxWidth: Math.min(preferredWidth, roomGrowingLeft) };
+  }
+  return { left, bottom, maxHeight, maxWidth: Math.min(preferredWidth, roomGrowingRight) };
+}
+
+/** Opens, positions and dismisses a composer popover; placement comes from computeComposerMenuAnchor. */
 export function useComposerMenuAnchor(
   isOpen: boolean,
   onClose: () => void,
@@ -29,13 +50,11 @@ export function useComposerMenuAnchor(
       return;
     }
 
-    const right = Math.max(VIEWPORT_MARGIN, window.innerWidth - rect.right);
-    setAnchor({
-      right,
-      bottom: window.innerHeight - rect.top + MENU_GAP,
-      maxHeight: Math.max(160, rect.top - MENU_GAP - VIEWPORT_MARGIN),
-      maxWidth: Math.max(200, Math.min(preferredWidth, window.innerWidth - right - VIEWPORT_MARGIN)),
-    });
+    setAnchor(computeComposerMenuAnchor(
+      rect,
+      { width: window.innerWidth, height: window.innerHeight },
+      preferredWidth,
+    ));
   }, [preferredWidth]);
 
   useEffect(() => {
