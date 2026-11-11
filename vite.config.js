@@ -58,19 +58,13 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
+          // CodeMirror and xterm are deliberately not listed: they are only
+          // reachable through lazy imports (the editor and the terminal), so
+          // Rollup already splits them out. Naming them here also dragged the
+          // helpers they share with the app into their chunk, which made the
+          // entry chunk import all of CodeMirror at startup.
           manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-codemirror': [
-              '@uiw/react-codemirror',
-              '@codemirror/lang-css',
-              '@codemirror/lang-html',
-              '@codemirror/lang-javascript',
-              '@codemirror/lang-json',
-              '@codemirror/lang-markdown',
-              '@codemirror/lang-python',
-              '@codemirror/theme-one-dark'
-            ],
-            'vendor-xterm': ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-clipboard', '@xterm/addon-webgl']
+            'vendor-react': ['react', 'react-dom', 'react-router-dom']
           }
         }
       }

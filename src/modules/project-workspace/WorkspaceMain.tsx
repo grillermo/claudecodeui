@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, type Dispatch, type SetStateAction, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, type Dispatch, type SetStateAction, useState } from 'react';
 
 import { ChatInterface } from '@/modules/chat';
 import { FileTree } from '@/modules/file-tree';
@@ -193,56 +193,60 @@ function WorkspaceMain({
             </WorkspaceErrorBoundary>
           </div>
 
-          {activeTab === 'files' && (
-            <div className="h-full overflow-hidden">
-              <FileTree
-                selectedProject={selectedProject}
-                onFileOpen={handleFileOpen}
-                revealDirectory={revealDirectory}
-              />
-            </div>
-          )}
+          {/* Every tab but chat is a lazy export, fetched the first time it is opened.
+              Chat stays outside the boundary so a loading tab never hides it. */}
+          <Suspense fallback={null}>
+            {activeTab === 'files' && (
+              <div className="h-full overflow-hidden">
+                <FileTree
+                  selectedProject={selectedProject}
+                  onFileOpen={handleFileOpen}
+                  revealDirectory={revealDirectory}
+                />
+              </div>
+            )}
 
-          {activeTab === 'shell' && (
-            <div className="h-full w-full overflow-hidden">
-              <StandaloneShell
-                project={selectedProject}
-                session={selectedSession}
-                showHeader={false}
-                isActive={activeTab === 'shell'}
-              />
-            </div>
-          )}
+            {activeTab === 'shell' && (
+              <div className="h-full w-full overflow-hidden">
+                <StandaloneShell
+                  project={selectedProject}
+                  session={selectedSession}
+                  showHeader={false}
+                  isActive={activeTab === 'shell'}
+                />
+              </div>
+            )}
 
-          {activeTab === 'git' && (
-            <div className="h-full overflow-hidden">
-              <GitPanel
-                selectedProject={selectedProject}
-                isMobile={isMobile}
-                onFileOpen={handleFileOpen}
-                onProjectSelect={onProjectSelect}
-                onProjectsRefresh={onProjectsRefresh}
-              />
-            </div>
-          )}
+            {activeTab === 'git' && (
+              <div className="h-full overflow-hidden">
+                <GitPanel
+                  selectedProject={selectedProject}
+                  isMobile={isMobile}
+                  onFileOpen={handleFileOpen}
+                  onProjectSelect={onProjectSelect}
+                  onProjectsRefresh={onProjectsRefresh}
+                />
+              </div>
+            )}
 
-          {shouldShowTasksTab && <TaskMasterPanel isVisible={activeTab === 'tasks'} />}
+            {shouldShowTasksTab && <TaskMasterPanel isVisible={activeTab === 'tasks'} />}
 
-          {shouldShowBrowserTab && activeTab === 'browser' && (
-            <div className="h-full overflow-hidden">
-              <BrowserUsePanel isVisible={activeTab === 'browser'} onShowSettings={onShowSettings} />
-            </div>
-          )}
+            {shouldShowBrowserTab && activeTab === 'browser' && (
+              <div className="h-full overflow-hidden">
+                <BrowserUsePanel isVisible={activeTab === 'browser'} onShowSettings={onShowSettings} />
+              </div>
+            )}
 
-          {activeTab.startsWith('plugin:') && (
-            <div className="h-full overflow-hidden">
-              <PluginTabContent
-                pluginName={activeTab.replace('plugin:', '')}
-                selectedProject={selectedProject}
-                selectedSession={selectedSession}
-              />
-            </div>
-          )}
+            {activeTab.startsWith('plugin:') && (
+              <div className="h-full overflow-hidden">
+                <PluginTabContent
+                  pluginName={activeTab.replace('plugin:', '')}
+                  selectedProject={selectedProject}
+                  selectedSession={selectedSession}
+                />
+              </div>
+            )}
+          </Suspense>
         </div>
 
         <EditorSidebar

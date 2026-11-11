@@ -1,8 +1,7 @@
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useState, useEffect, useRef } from 'react';
 import type { MouseEvent, MutableRefObject } from 'react';
 
 import type { CodeEditorFile } from '@/shared/types';
-import CodeEditor from '@/modules/code-editor/CodeEditor';
 
 type EditorSidebarProps = {
   editingFile: CodeEditorFile | null;
@@ -20,6 +19,10 @@ type EditorSidebarProps = {
   projectPath?: string;
   fillSpace?: boolean;
 };
+
+// Loaded when the first file is opened: the editor brings CodeMirror (~750 kB),
+// which a session that only chats should not have to parse at startup.
+const CodeEditor = lazy(() => import('@/modules/code-editor/CodeEditor'));
 
 // Minimum width for the left content (file tree, chat, etc.)
 const MIN_LEFT_CONTENT_WIDTH = 200;
@@ -136,16 +139,18 @@ export default function EditorSidebar({
           : `h-full overflow-hidden border-l border-gray-200 dark:border-gray-700 ${useFlexLayout ? 'min-w-0 flex-1' : ''}`}
         style={isFloating || useFlexLayout ? undefined : { width: `${effectiveWidth}px`, minWidth: `${MIN_EDITOR_WIDTH}px` }}
       >
-        <CodeEditor
-          file={editingFile}
-          onClose={handleClose}
-          onUnsavedChangesChange={onUnsavedChangesChange}
-          projectPath={projectPath}
-          isSidebar={!isFloating}
-          isExpanded={!isFloating && editorExpanded}
-          onToggleExpand={isFloating ? null : onToggleEditorExpand}
-          onPopOut={isFloating ? null : handlePopOut}
-        />
+        <Suspense fallback={null}>
+          <CodeEditor
+            file={editingFile}
+            onClose={handleClose}
+            onUnsavedChangesChange={onUnsavedChangesChange}
+            projectPath={projectPath}
+            isSidebar={!isFloating}
+            isExpanded={!isFloating && editorExpanded}
+            onToggleExpand={isFloating ? null : onToggleEditorExpand}
+            onPopOut={isFloating ? null : handlePopOut}
+          />
+        </Suspense>
       </div>
     </div>
   );

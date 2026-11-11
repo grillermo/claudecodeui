@@ -33,7 +33,8 @@ vi.mock('@/modules/provider-auth', () => ({
   useProviderAuthStatus: () => providerAuth,
 }));
 
-const { Onboarding } = await import('@/modules/onboarding');
+// The module's public export is lazy; the component itself renders synchronously.
+const { default: Onboarding } = await import('@/modules/onboarding/Onboarding');
 
 describe('Onboarding surfaces server errors as text', () => {
   it('shows the message of the structured envelope when saving the git identity fails', async () => {

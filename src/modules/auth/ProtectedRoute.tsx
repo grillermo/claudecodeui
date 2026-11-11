@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 
 import { IS_PLATFORM } from '@/shared/utils';
@@ -19,9 +20,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <AuthLoadingScreen />;
   }
 
+  // Onboarding is a lazy export; the loading screen stays up while its chunk is fetched.
+  const onboarding = (
+    <Suspense fallback={<AuthLoadingScreen />}>
+      <Onboarding onComplete={refreshOnboardingStatus} />
+    </Suspense>
+  );
+
   if (IS_PLATFORM) {
     if (!hasCompletedOnboarding) {
-      return <Onboarding onComplete={refreshOnboardingStatus} />;
+      return onboarding;
     }
 
     return <>{children}</>;
@@ -36,7 +44,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!hasCompletedOnboarding) {
-    return <Onboarding onComplete={refreshOnboardingStatus} />;
+    return onboarding;
   }
 
   return <>{children}</>;

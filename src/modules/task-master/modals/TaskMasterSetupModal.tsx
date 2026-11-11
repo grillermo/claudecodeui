@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Plus, Terminal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -57,18 +57,21 @@ export default function TaskMasterSetupModal({ isOpen, project, onClose, onAfter
 
         <div className="flex-1 p-4">
           <div className="h-full overflow-hidden rounded-lg bg-black">
-            <Shell
-              selectedProject={project}
-              selectedSession={null}
-              initialCommand="npx task-master init"
-              isPlainShell
-              isActive
-              onProcessComplete={(exitCode) => {
-                if (exitCode === 0) {
-                  setIsTaskMasterComplete(true);
-                }
-              }}
-            />
+            {/* Shell is a lazy export: its chunk is fetched the first time a terminal is shown. */}
+            <Suspense fallback={null}>
+              <Shell
+                selectedProject={project}
+                selectedSession={null}
+                initialCommand="npx task-master init"
+                isPlainShell
+                isActive
+                onProcessComplete={(exitCode) => {
+                  if (exitCode === 0) {
+                    setIsTaskMasterComplete(true);
+                  }
+                }}
+              />
+            </Suspense>
           </div>
         </div>
 

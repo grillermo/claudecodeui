@@ -62,6 +62,9 @@ vi.mock('@/modules/code-editor/utils/editorToolbarPanel', () => ({
 }));
 
 const { default: EditorSidebar } = await import('@/modules/code-editor/EditorSidebar');
+// EditorSidebar loads CodeEditor lazily. Importing it up front keeps the first
+// test from spending its query timeout on that load.
+await import('@/modules/code-editor/CodeEditor');
 
 const file: CodeEditorFile = { name: 'a.txt', path: '/repo/a.txt', projectId: 'p1' };
 

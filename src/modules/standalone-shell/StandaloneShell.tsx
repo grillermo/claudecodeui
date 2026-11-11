@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 
 import type { Project, ProjectSession } from '@/shared/types';
 import { Shell } from '@/modules/shell';
@@ -63,16 +63,19 @@ export default function StandaloneShell({
       )}
 
       <div className="min-h-0 w-full flex-1">
-        <Shell
-          selectedProject={project}
-          selectedSession={session}
-          initialCommand={command}
-          isPlainShell={shouldUsePlainShell}
-          isActive={isActive}
-          onProcessComplete={handleProcessComplete}
-          minimal={minimal}
-          autoConnect={minimal ? true : autoConnect}
-        />
+        {/* Shell is a lazy export: its chunk is fetched the first time a terminal is shown. */}
+        <Suspense fallback={null}>
+          <Shell
+            selectedProject={project}
+            selectedSession={session}
+            initialCommand={command}
+            isPlainShell={shouldUsePlainShell}
+            isActive={isActive}
+            onProcessComplete={handleProcessComplete}
+            minimal={minimal}
+            autoConnect={minimal ? true : autoConnect}
+          />
+        </Suspense>
       </div>
     </div>
   );

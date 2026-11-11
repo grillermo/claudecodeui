@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, EyeOff, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import { Button } from '@/shared/ui';
 import { Settings } from '@/modules/settings';
 import { VersionUpgradeModal } from '@/modules/version-upgrade';
-import type { InstallMode, PendingSidebarDeletion, Project, ReleaseInfo, SettingsProject } from '@/shared/types';
+import type { InstallMode, PendingSidebarDeletion, Project, ReleaseInfo } from '@/shared/types';
 import { normalizeProjectForSettings } from '@/modules/sidebar/utils/sidebarProjectFormatting';
 import { ProjectCreationWizard } from '@/modules/project-creation-wizard';
 
@@ -32,19 +32,6 @@ type SidebarModalsProps = {
   installMode: InstallMode;
   t: TFunction;
 };
-
-type TypedSettingsProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  projects: SettingsProject[];
-  initialTab: string;
-};
-
-const SettingsComponent = Settings as (props: TypedSettingsProps) => JSX.Element;
-
-function TypedSettings(props: TypedSettingsProps) {
-  return <SettingsComponent {...props} />;
-}
 
 /** Rendered by Sidebar to host its settings, new-project, delete-confirmation and version modals in one place. */
 export default function SidebarModals({
@@ -76,25 +63,28 @@ export default function SidebarModals({
 
   return (
     <>
-      {showNewProject &&
-        ReactDOM.createPortal(
-          <ProjectCreationWizard
-            onClose={onCloseNewProject}
-            onProjectCreated={onProjectCreated}
-          />,
-          document.body,
-        )}
+      {/* The wizard and the settings dialog are lazy exports, fetched the first time they open. */}
+      <Suspense fallback={null}>
+        {showNewProject &&
+          ReactDOM.createPortal(
+            <ProjectCreationWizard
+              onClose={onCloseNewProject}
+              onProjectCreated={onProjectCreated}
+            />,
+            document.body,
+          )}
 
-      {showSettings &&
-        ReactDOM.createPortal(
-          <TypedSettings
-            isOpen={showSettings}
-            onClose={onCloseSettings}
-            projects={settingsProjects}
-            initialTab={settingsInitialTab}
-          />,
-          document.body,
-        )}
+        {showSettings &&
+          ReactDOM.createPortal(
+            <Settings
+              isOpen={showSettings}
+              onClose={onCloseSettings}
+              projects={settingsProjects}
+              initialTab={settingsInitialTab}
+            />,
+            document.body,
+          )}
+      </Suspense>
 
       {pendingDeletion?.kind === 'project' &&
         ReactDOM.createPortal(
