@@ -199,25 +199,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       setError(null);
 
-      const statusResponse = await api.auth.status();
+      // The setup check, the user and the onboarding status are independent
+      // requests, so they go out together: one after another, each cost a full
+      // round trip before the workspace could render.
+      //
+      // Read the stored token instead of depending on `token` state: this
+      // bootstrap flips `isLoading`, which swaps the whole app for the loading
+      // screen, so it must run once on mount and not again on every
+      // X-Refreshed-Token rotation (each one remounted the workspace, #1269).
+      const hasStoredToken = Boolean(readStoredToken());
+      const [statusResponse, userResponse] = await Promise.all([
+        api.auth.status(),
+        hasStoredToken ? api.auth.user() : null,
+        hasStoredToken ? checkOnboardingStatus() : null,
+      ]);
       const statusPayload = await parseJsonSafely<AuthStatusPayload>(statusResponse);
 
       if (statusPayload?.needsSetup) {
+        // A token left over from an earlier install was just rejected, which
+        // is not worth a "session expired" message on the setup form.
+        setError(null);
         setNeedsSetup(true);
         return;
       }
 
       setNeedsSetup(false);
 
-      // Read the stored token instead of depending on `token` state: this
-      // bootstrap flips `isLoading`, which swaps the whole app for the loading
-      // screen, so it must run once on mount and not again on every
-      // X-Refreshed-Token rotation (each one remounted the workspace, #1269).
-      if (!readStoredToken()) {
+      if (!userResponse) {
         return;
       }
 
-      const userResponse = await api.auth.user();
       if (!userResponse.ok) {
         clearSession();
         return;
@@ -230,7 +241,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       setUser(userPayload.user);
-      await checkOnboardingStatus();
     } catch (caughtError) {
       console.error('[Auth] Auth status check failed:', caughtError);
       setError(tRef.current(AUTH_ERROR_MESSAGES.authStatusCheckFailed));
