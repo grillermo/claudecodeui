@@ -78,13 +78,6 @@
     "sendByCtrlEnter": "Kirim dengan Ctrl+Enter",
     "voiceEnabled": "Suara (mikrofon + bacakan)",
     "sendByCtrlEnterDescription": "Jika diaktifkan, Ctrl+Enter akan mengirim pesan, bukan Enter saja. Berguna bagi pengguna IME untuk mencegah pengiriman tidak disengaja.",
-    "dragHandle": {
-      "dragging": "Menyeret handle",
-      "closePanel": "Tutup panel pengaturan",
-      "openPanel": "Buka panel pengaturan",
-      "draggingStatus": "Menyeret...",
-      "toggleAndMove": "Klik untuk membuka/menutup, seret untuk memindahkan"
-    },
     "tabs": {
       "settings": "Pengaturan",
       "commands": "Perintah"

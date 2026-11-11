@@ -1,13 +1,10 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import type { MouseEvent as ReactMouseEvent } from 'react';
 
-import { useDeviceSettings } from '@/shared/hooks/useDeviceSettings';
 import { useProjectSlashCommands } from '@/shared/hooks/useProjectSlashCommands';
 import { useSelectedProvider } from '@/shared/hooks/useSelectedProvider';
 import { useUiPreferences, useSetUiPreference } from '@/shared/context/UiPreferencesContext';
 import { useTheme } from '@/shared/context/ThemeContext';
-import { useQuickSettingsDrag } from '@/modules/quick-settings-panel/hooks/useQuickSettingsDrag';
-import { useQuickSettingsPanelState } from '@/modules/quick-settings-panel/hooks/useQuickSettingsPanelState';
+import { useQuickSettingsPanel } from '@/modules/quick-settings-panel/context/QuickSettingsPanelContext';
 import type {
   PreferenceToggleKey,
   Project,
@@ -17,7 +14,6 @@ import type {
 import { getQuickSettingsTabId, getQuickSettingsTabPanelId } from '@/shared/utils';
 import QuickSettingsCommandsTab from '@/modules/quick-settings-panel/QuickSettingsCommandsTab';
 import QuickSettingsContent from '@/modules/quick-settings-panel/QuickSettingsContent';
-import QuickSettingsHandle from '@/modules/quick-settings-panel/QuickSettingsHandle';
 import QuickSettingsPanelHeader from '@/modules/quick-settings-panel/QuickSettingsPanelHeader';
 import QuickSettingsTabs from '@/modules/quick-settings-panel/QuickSettingsTabs';
 
@@ -30,17 +26,17 @@ type QuickSettingsPanelViewProps = {
 
 /** Exported as QuickSettingsPanel and rendered by the project-workspace module as its quick settings drawer — an overlay by default, docked into the workspace row when pinned. */
 function QuickSettingsPanelView({ selectedProject, onInsertCommand }: QuickSettingsPanelViewProps) {
-  const { isMobile } = useDeviceSettings({ trackPWA: false });
-  const canPin = !isMobile;
   const {
     isOpen,
     isPinned,
+    canPin,
     activeTab,
     close,
     toggle,
     selectTab,
     togglePin,
-  } = useQuickSettingsPanelState({ canPin });
+  } = useQuickSettingsPanel();
+  const isMobile = !canPin;
   const { isDarkMode } = useTheme();
   const preferences = useUiPreferences();
   const setPreference = useSetUiPreference();
@@ -54,13 +50,6 @@ function QuickSettingsPanelView({ selectedProject, onInsertCommand }: QuickSetti
     // for a second request while the Commands tab is actually showing.
     enabled: isOpen && activeTab === 'commands',
   });
-  const {
-    isDragging,
-    handleStyle,
-    startDrag,
-    consumeSuppressedClick,
-  } = useQuickSettingsDrag({ isMobile });
-
   const quickSettingsPreferences = useMemo<QuickSettingsPreferences>(() => ({
     showRawParameters: preferences.showRawParameters,
     showThinking: preferences.showThinking,
@@ -78,19 +67,6 @@ function QuickSettingsPanelView({ selectedProject, onInsertCommand }: QuickSetti
       setPreference(key, value);
     },
     [setPreference],
-  );
-
-  const handleToggleFromHandle = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      // A drag releases a click event as well; this guard prevents accidental toggles.
-      if (consumeSuppressedClick()) {
-        event.preventDefault();
-        return;
-      }
-
-      toggle();
-    },
-    [consumeSuppressedClick, toggle],
   );
 
   const handleInsertCommand = useCallback(
@@ -136,7 +112,8 @@ function QuickSettingsPanelView({ selectedProject, onInsertCommand }: QuickSetti
         isPinned={isPinned}
         canPin={canPin}
         onTogglePin={togglePin}
-        onClose={close}
+        // A docked panel ignores `close`; collapsing it keeps the pin.
+        onClose={isPinned ? toggle : close}
       />
       <QuickSettingsTabs activeTab={activeTab} onSelectTab={selectTab} />
       <div
@@ -166,16 +143,7 @@ function QuickSettingsPanelView({ selectedProject, onInsertCommand }: QuickSetti
 
   return (
     <>
-      <QuickSettingsHandle
-        isOpen={isOpen}
-        isDragging={isDragging}
-        style={handleStyle}
-        onClick={handleToggleFromHandle}
-        onMouseDown={startDrag}
-        onTouchStart={startDrag}
-      />
-
-      {/* Docked: a layout column while open, gone while collapsed via the handle (the pin is kept). */}
+      {/* Docked: a layout column while open, gone while collapsed (the pin is kept). */}
       {isPinned ? (
         isOpen && (
           <div className="relative h-full w-64 flex-shrink-0 border-l border-border bg-background">

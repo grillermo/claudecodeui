@@ -78,13 +78,6 @@
     "sendByCtrlEnter": "使用 Ctrl+Enter 发送",
     "voiceEnabled": "语音（麦克风 + 朗读）",
     "sendByCtrlEnterDescription": "启用后，按 Ctrl+Enter 发送消息，而不是仅按 Enter。这对于使用输入法的用户可以避免意外发送。",
-    "dragHandle": {
-      "dragging": "正在拖拽手柄",
-      "closePanel": "关闭设置面板",
-      "openPanel": "打开设置面板",
-      "draggingStatus": "正在拖拽...",
-      "toggleAndMove": "点击切换，拖拽移动"
-    },
     "tabs": {
       "settings": "设置",
       "commands": "命令"

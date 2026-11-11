@@ -61,13 +61,6 @@
     "showThinking": "Düşünmeyi göster",
     "sendByCtrlEnter": "Ctrl+Enter ile gönder",
     "sendByCtrlEnterDescription": "Etkinleştirildiğinde, Ctrl+Enter'a basmak yalnız Enter yerine mesajı gönderir. IME (girdi metot düzenleyici) kullananlar için yanlışlıkla göndermeyi önler.",
-    "dragHandle": {
-      "dragging": "Tutamaç sürükleniyor",
-      "closePanel": "Ayarlar panelini kapat",
-      "openPanel": "Ayarlar panelini aç",
-      "draggingStatus": "Sürükleniyor...",
-      "toggleAndMove": "Açıp kapamak için tıkla, taşımak için sürükle"
-    },
     "tabs": {
       "settings": "Ayarlar",
       "commands": "Komutlar"

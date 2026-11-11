@@ -9,7 +9,7 @@ type QuickSettingsPanelHeaderProps = {
   onClose: () => void;
 };
 
-/** Rendered by QuickSettingsPanelView as the drawer's title bar with the pin toggle and, while it is an overlay, a close button. */
+/** Rendered by QuickSettingsPanelView as the drawer's title bar with the pin toggle and a close button. */
 export default function QuickSettingsPanelHeader({
   isPinned,
   canPin,
@@ -38,18 +38,16 @@ export default function QuickSettingsPanelHeader({
             {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
           </button>
         )}
-        {/* A docked panel is collapsed with the edge handle or unpinned, so the close button is overlay-only. */}
-        {!isPinned && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('quickSettings.close')}
-            title={t('quickSettings.close')}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+        {/* Docked, this collapses the column and keeps the pin; as an overlay it closes it. */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('quickSettings.close')}
+          title={t('quickSettings.close')}
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

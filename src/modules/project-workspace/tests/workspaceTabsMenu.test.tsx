@@ -85,3 +85,33 @@ test('choosing a tab switches to it and closes the menu', () => {
   assert.deepEqual(setActiveTab.mock.calls, [['plugin:enabled-plugin']]);
   assert.equal(isTabListed('workspace-tab-chat'), false);
 });
+
+test('the quick settings entry toggles the drawer and shows whether it is open', async () => {
+  const { QuickSettingsPanelProvider, useQuickSettingsPanel } = await import('@/modules/quick-settings-panel');
+
+  const OpenState = () => <span data-testid="quick-settings-open">{String(useQuickSettingsPanel().isOpen)}</span>;
+  const isOpen = () => screen.getByTestId('quick-settings-open').textContent === 'true';
+
+  render(
+    <QuickSettingsPanelProvider>
+      <OpenState />
+      <WorkspaceTabsMenu activeTab="chat" setActiveTab={vi.fn()} shouldShowTasksTab={false} shouldShowBrowserTab={false} />
+    </QuickSettingsPanelProvider>,
+  );
+
+  openMenu();
+  assert.equal(screen.getByTestId('workspace-quick-settings').getAttribute('aria-current'), null);
+  fireEvent.click(screen.getByTestId('workspace-quick-settings'));
+  assert.equal(isOpen(), true);
+
+  openMenu();
+  assert.equal(screen.getByTestId('workspace-quick-settings').getAttribute('aria-current'), 'true');
+  fireEvent.click(screen.getByTestId('workspace-quick-settings'));
+  assert.equal(isOpen(), false);
+});
+
+test('the quick settings entry is left out without a quick settings provider', () => {
+  renderMenu();
+  openMenu();
+  assert.equal(isTabListed('workspace-quick-settings'), false);
+});

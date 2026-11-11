@@ -78,13 +78,6 @@
     "sendByCtrlEnter": "Send by Ctrl+Enter",
     "voiceEnabled": "Voice (mic + read aloud)",
     "sendByCtrlEnterDescription": "When enabled, pressing Ctrl+Enter will send the message instead of just Enter. This is useful for IME users to avoid accidental sends.",
-    "dragHandle": {
-      "dragging": "Dragging handle",
-      "closePanel": "Close settings panel",
-      "openPanel": "Open settings panel",
-      "draggingStatus": "Dragging...",
-      "toggleAndMove": "Click to toggle, drag to move"
-    },
     "tabs": {
       "settings": "Settings",
       "commands": "Commands"

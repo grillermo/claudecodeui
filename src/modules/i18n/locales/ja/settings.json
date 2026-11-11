@@ -61,13 +61,6 @@
     "showThinking": "思考を表示",
     "sendByCtrlEnter": "Ctrl+Enterで送信",
     "sendByCtrlEnterDescription": "有効にすると、Enterではなく Ctrl+Enter でメッセージを送信します。IMEユーザーの誤送信防止に便利です。",
-    "dragHandle": {
-      "dragging": "ドラッグ中",
-      "closePanel": "設定パネルを閉じる",
-      "openPanel": "設定パネルを開く",
-      "draggingStatus": "ドラッグ中...",
-      "toggleAndMove": "クリックで切替、ドラッグで移動"
-    },
     "tabs": {
       "settings": "設定",
       "commands": "コマンド"

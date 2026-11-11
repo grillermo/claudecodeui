@@ -39,8 +39,8 @@ const isQuickSettingsTab = (value: unknown): value is QuickSettingsTab => (
 );
 
 // Docked = pinned somewhere pinning is possible. A docked panel is part of the
-// layout: the backdrop and Escape (`close`) cannot dismiss it; only the edge
-// handle (`toggle`) collapses it, and the pin survives that so the next toggle
+// layout: the backdrop and Escape (`close`) cannot dismiss it; only `toggle` (the
+// header menu entry or the panel's own close button) collapses it, and the pin survives that so the next toggle
 // docks it again.
 const isDocked = (state: QuickSettingsPanelState, canPin: boolean): boolean => (
   state.pinned && canPin
@@ -113,7 +113,7 @@ export function quickSettingsPanelReducer(
     case 'leaveDesktop':
       // The docked column cannot exist on a narrow viewport, and turning it
       // into a full-screen overlay uninvited would cover the app; hide it and
-      // let the handle bring it back. The pin is kept for the next desktop visit.
+      // let the header menu bring it back. The pin is kept for the next desktop visit.
       if (!state.pinned || !state.isOpen) {
         return state;
       }

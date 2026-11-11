@@ -1,10 +1,11 @@
-import { ClipboardCheck, Folder, GitBranch, MessageSquare, MonitorPlay, MoreHorizontal, Terminal, type LucideIcon } from 'lucide-react';
+import { ClipboardCheck, Folder, GitBranch, MessageSquare, MonitorPlay, MoreHorizontal, Settings2, Terminal, type LucideIcon } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionMenu, type ActionMenuItem } from '@/shared/ui';
 import type { AppTab } from '@/shared/types';
 import { usePlugins, PluginIcon } from '@/modules/plugins';
+import { useOptionalQuickSettingsPanel } from '@/modules/quick-settings-panel';
 
 type WorkspaceTabsMenuProps = {
   activeTab: AppTab;
@@ -35,7 +36,7 @@ const getTabTestId = (tabId: AppTab) => `workspace-tab-${tabId.replace(':', '-')
 /**
  * Rendered by WorkspaceHeader as a three-dot menu of the built-in workspace tabs
  * plus any enabled plugin tabs, so switching views costs the conversation no
- * header space.
+ * header space. Its last entry opens or collapses the quick settings drawer.
  */
 export default function WorkspaceTabsMenu({
   activeTab,
@@ -45,6 +46,7 @@ export default function WorkspaceTabsMenu({
 }: WorkspaceTabsMenuProps) {
   const { t } = useTranslation();
   const { plugins } = usePlugins();
+  const quickSettings = useOptionalQuickSettingsPanel();
   const menuLabel = t('tabs.views', { defaultValue: 'Workspace views' });
 
   const builtInTabs: BuiltInTab[] = [
@@ -83,6 +85,18 @@ export default function WorkspaceTabsMenu({
       };
     });
 
+  const quickSettingsItems: ActionMenuItem[] = quickSettings
+    ? [{
+      key: 'quick-settings',
+      label: t('settings:quickSettings.title'),
+      icon: Settings2,
+      isSelected: quickSettings.isOpen,
+      testId: 'workspace-quick-settings',
+      showDividerBefore: true,
+      onSelect: quickSettings.toggle,
+    }]
+    : [];
+
   return (
     <ActionMenu
       label={menuLabel}
@@ -93,7 +107,7 @@ export default function WorkspaceTabsMenu({
       className="shrink-0"
       triggerClassName="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
       triggerTestId="workspace-tabs"
-      items={[...builtInItems, ...pluginItems]}
+      items={[...builtInItems, ...pluginItems, ...quickSettingsItems]}
     />
   );
 }

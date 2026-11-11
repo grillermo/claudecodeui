@@ -61,13 +61,6 @@
     "showThinking": "Afficher la réflexion",
     "sendByCtrlEnter": "Envoyer avec Ctrl+Entrée",
     "sendByCtrlEnterDescription": "Lorsqu'activé, appuyer sur Ctrl+Entrée envoie le message au lieu de simplement Entrée. Utile pour les utilisateurs IME pour éviter les envois accidentels.",
-    "dragHandle": {
-      "dragging": "Glissement en cours",
-      "closePanel": "Fermer le panneau de paramètres",
-      "openPanel": "Ouvrir le panneau de paramètres",
-      "draggingStatus": "Glissement...",
-      "toggleAndMove": "Cliquer pour basculer, glisser pour déplacer"
-    },
     "tabs": {
       "settings": "Paramètres",
       "commands": "Commandes"

@@ -86,7 +86,7 @@ test('close cannot hide a docked panel', () => {
   assert.equal(quickSettingsPanelReducer(docked, { type: 'close', canPin: true }), docked);
 });
 
-test('the handle collapses a docked panel without discarding the pin', () => {
+test('toggling collapses a docked panel without discarding the pin', () => {
   const hidden = quickSettingsPanelReducer(docked, { type: 'toggle' });
   assert.deepEqual(hidden, { isOpen: false, pinned: true, tab: 'commands' });
   assert.deepEqual(quickSettingsPanelReducer(hidden, { type: 'toggle' }), docked);
@@ -137,7 +137,7 @@ test('the hook starts a pinned panel closed and unpinned on mobile without erasi
   assert.deepEqual(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? ''), { pinned: true, tab: 'commands' });
 });
 
-test('the hook keeps a docked panel and its handle in step across a viewport change', () => {
+test('the hook keeps a docked panel in step across a viewport change', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ pinned: true, tab: 'settings' }));
 
   const { result, rerender } = renderHook(
@@ -152,7 +152,7 @@ test('the hook keeps a docked panel and its handle in step across a viewport cha
   assert.equal(result.current.isOpen, false);
   assert.equal(result.current.isPinned, false);
 
-  // Widening again: still pinned, still hidden, so the handle reads "open" and
+  // Widening again: still pinned, still hidden, and
   // the next toggle docks it.
   rerender({ canPin: true });
   assert.equal(result.current.isOpen, false);

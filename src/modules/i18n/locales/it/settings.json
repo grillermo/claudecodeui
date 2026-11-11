@@ -61,13 +61,6 @@
     "showThinking": "Mostra ragionamento",
     "sendByCtrlEnter": "Invia con Ctrl+Invio",
     "sendByCtrlEnterDescription": "Se abilitato, premere Ctrl+Invio invierà il messaggio invece di Invio. Utile per gli utenti IME per evitare invii accidentali.",
-    "dragHandle": {
-      "dragging": "Trascinamento maniglia",
-      "closePanel": "Chiudi pannello impostazioni",
-      "openPanel": "Apri pannello impostazioni",
-      "draggingStatus": "Trascinamento...",
-      "toggleAndMove": "Clicca per attivare/disattivare, trascina per spostare"
-    },
     "tabs": {
       "settings": "Impostazioni",
       "commands": "Comandi"
