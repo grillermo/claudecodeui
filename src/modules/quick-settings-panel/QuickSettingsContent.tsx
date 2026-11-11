@@ -10,7 +10,6 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { DarkModeToggle } from '@/shared/ui';
-import { LanguageSelector } from '@/modules/i18n';
 import { SETTING_ROW_CLASS } from '@/shared/constants';
 import type { PreferenceToggleKey, QuickSettingsPreferences } from '@/shared/types';
 import QuickSettingsClaudeAccountRow from '@/modules/quick-settings-panel/QuickSettingsClaudeAccountRow';
@@ -93,7 +92,6 @@ export default function QuickSettingsContent({
           </span>
           <DarkModeToggle />
         </div>
-        <LanguageSelector compact />
       </QuickSettingsSection>
 
       <QuickSettingsSection title={t('quickSettings.sections.toolDisplay')}>
