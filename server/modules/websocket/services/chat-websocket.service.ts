@@ -1,3 +1,4 @@
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { WebSocket } from 'ws';
@@ -19,7 +20,7 @@ import type {
   ProviderPermissionDecision,
   ProviderRuntimeWriter,
 } from '@/shared/types.js';
-import { parseIncomingJsonObject } from '@/shared/utils.js';
+import { createNormalizedMessage, parseIncomingJsonObject } from '@/shared/utils.js';
 
 /**
  * Trust boundary for client-supplied image attachments: chat.send options come
@@ -205,6 +206,21 @@ function resolveSendTarget(
 }
 
 /**
+ * Returns `cwd` when it is set but is not an existing directory, else null.
+ * An unset cwd is left to the runtime's own default.
+ */
+async function findMissingDirectory(cwd: unknown): Promise<string | null> {
+  if (typeof cwd !== 'string' || !cwd.trim()) {
+    return null;
+  }
+  try {
+    return (await stat(cwd)).isDirectory() ? null : cwd;
+  } catch {
+    return cwd;
+  }
+}
+
+/**
  * Registers the run and hands the turn to the provider runtime.
  *
  * `extraRuntimeOptions` is how an edited message asks the provider to resume
@@ -283,6 +299,19 @@ async function dispatchRun(
     cwd: clientOptions.cwd ?? session.project_path ?? undefined,
     projectPath: session.project_path ?? clientOptions.projectPath,
   };
+
+  // A project moved or deleted on disk still lists in the sidebar, and spawning
+  // a provider CLI in a missing cwd fails with ENOENT, which the Claude SDK
+  // misreports as "native binary ... exists but failed to launch". Say what is
+  // actually wrong instead, before anything (including an edit's rewind) runs.
+  const missingCwd = await findMissingDirectory(runtimeOptions.cwd);
+  if (missingCwd) {
+    const message = `The project folder ${missingCwd} no longer exists. It may have been moved or deleted; open the project from its current location and send the message there.`;
+    console.error(`[Chat] Refusing to start "${provider}" in a missing folder`, { sessionId, cwd: missingCwd });
+    run.writer.send(createNormalizedMessage({ kind: 'error', content: message, sessionId, provider }));
+    chatRunRegistry.completeRunIfCurrent(run, { exitCode: 1 });
+    return { started: false, error: message };
+  }
 
   let failure: string | null = null;
   try {
